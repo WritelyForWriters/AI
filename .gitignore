@@ -1,0 +1,16 @@
+# Python 가상환경
+venv/
+__pycache__/
+
+# IDE 설정 파일
+.idea/
+.vscode/
+
+# 민감한 파일
+.env
+*.key
+*.pem
+
+# 운영 시스템 파일
+.DS_Store
+Thumbs.db
