@@ -1,27 +1,59 @@
-[project]
+[tool.poetry]
 name = "ai"
 version = "0.1.0"
 description = "AI server with Langchain"
-authors = [
-    {name = "qkoo0833",email = "qkoo0833@gmail.com"}
-]
-license = {text = "MIT"}
-readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-    "langchain (>=0.3.14,<0.4.0)",
-    "langchain-core (>=0.3.29,<0.4.0)",
-    "langchain-community (>=0.3.14,<0.4.0)",
-    "openai (>=1.59.7,<2.0.0)"
-]
+authors = ["qkoo0833 <qkoo0833@gmail.com>"]
+packages = [{include = "src"}]
 
+[tool.poetry.dependencies]
+python = ">=3.12,<4.0"
+langchain = ">=0.3.14,<0.4.0"
+langchain-core = ">=0.3.29,<0.4.0"
+langchain-community = ">=0.3.14,<0.4.0"
+openai = ">=1.59.7,<2.0.0"
+fastapi = ">=0.115.6,<0.116.0"
+langserve = {extras = ["all"], version = ">=0.3.1,<0.4.0"}
+langchain-cli = "^0.0.35"
+redis = "^5.0.1"
+weaviate-client = "^3.26.2"
+langchain-google-genai = "^2.0.8"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.poetry.dependencies]
-python = ">=3.12,<4.0"
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"
+ruff = "^0.3.0"
+mypy = "^1.8.0"
+pre-commit = "^4.0.1"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+select = [
+    "E",
+    "F",
+    "I",
+    "B",
+    "C4",
+]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.mypy]
+python_version = "3.12"
+disallow_untyped_defs = true
+check_untyped_defs = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+strict = true
+
 
