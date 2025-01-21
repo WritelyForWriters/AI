@@ -3,13 +3,13 @@ from pydantic import BaseModel
 from typing import Dict
 from src.vectorstores.vectorstore_manager import vectorstore_manager
 
-class RAGQuery(BaseModel):
+class AutoModifyQuery(BaseModel):
     user_setting: str
     context: str
     query: str
     tenant_id: str
 
-async def query_rag(request: RAGQuery) -> Dict:
+async def query_auto_modify(request: AutoModifyQuery) -> Dict:
     """
     RAG 체인을 사용하여 쿼리에 응답하는 엔드포인트 로직
     

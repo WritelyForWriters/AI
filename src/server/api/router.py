@@ -1,7 +1,5 @@
 from fastapi import APIRouter, FastAPI
-from langserve import add_routes
-from src.chains.research_chain import create_research_chain
-from src.server.endpoints import document_endpoint, rag_endpoint
+from src.server.endpoints import auto_modify_endpoint, document_endpoint
 from dotenv import load_dotenv
 import os
 
@@ -16,10 +14,9 @@ app = FastAPI(
 # Assistant 관련 라우터
 assistant_router = APIRouter(prefix="/v1/assistant")
 
-# RAG 쿼리 라우트
-@assistant_router.post("/rag")
-async def query_rag(request: rag_endpoint.RAGQuery):
-    return await rag_endpoint.query_rag(request)
+@assistant_router.post("/auto-modify")
+async def query_rag(request: auto_modify_endpoint.AutoModifyQuery):
+    return await auto_modify_endpoint.query_auto_modify(request)
 
 # 문서 관리 라우터
 document_router = APIRouter(prefix="/v1/documents")
