@@ -17,7 +17,6 @@ langchain-cli = "^0.0.35"
 redis = "^5.0.1"
 weaviate-client = "^3.26.2"
 langchain-google-genai = "^2.0.8"
-pre-commit = "^4.1.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
