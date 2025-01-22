@@ -1,7 +1,10 @@
 from langchain_core.prompts import ChatPromptTemplate
 
-AUTO_MODIFY_PROMPT = ChatPromptTemplate.from_messages([
-    ("system", """```xml
+AUTO_MODIFY_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """```xml
 <instruction>
     <instructions>
         1. 주어진 user-input 텍스트를 주의 깊게 읽고, 어색한 표현, 문법 오류, 또는 문장의 마무리를 수정합니다.
@@ -44,6 +47,8 @@ AUTO_MODIFY_PROMPT = ChatPromptTemplate.from_messages([
         </example>
     </examples>
 </instruction>
-```"""),
-    ("human", "<user-input>{query}</user-input>")
-]) 
+```""",
+        ),
+        ("human", "<user-input>{query}</user-input>"),
+    ]
+)
