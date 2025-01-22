@@ -46,6 +46,9 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 
+[tool.ruff.per-file-ignores]
+"src/prompts/*_prompts.py" = ["E501"]
+
 [tool.mypy]
 python_version = "3.12"
 disallow_untyped_defs = true
@@ -55,5 +58,11 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 warn_return_any = true
 strict = true
+ignore_missing_imports = true
+disable_error_code = ["misc"]  # FastAPI 데코레이터 타입 에러 무시
+
+[[tool.mypy.overrides]]
+module = ["fastapi.*"]
+implicit_reexport = true
 
 
