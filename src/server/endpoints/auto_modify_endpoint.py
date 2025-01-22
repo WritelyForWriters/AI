@@ -1,7 +1,7 @@
 from typing import Dict
 
 from fastapi import HTTPException, status
-from pydantic import BaseModel
+from pydantic.main import BaseModel
 
 from src.vectorstores.vectorstore_manager import vectorstore_manager
 
@@ -13,7 +13,7 @@ class AutoModifyQuery(BaseModel):
     tenant_id: str
 
 
-async def query_auto_modify(request: AutoModifyQuery) -> Dict:
+async def query_auto_modify(request: AutoModifyQuery) -> Dict[str, str]:
     """
     RAG 체인을 사용하여 쿼리에 응답하는 엔드포인트 로직
 

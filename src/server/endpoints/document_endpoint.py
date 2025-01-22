@@ -1,15 +1,15 @@
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from fastapi import HTTPException, status
 from langchain.schema import Document
-from pydantic import BaseModel
+from pydantic.main import BaseModel
 
 from src.vectorstores.vectorstore_manager import vectorstore_manager
 
 
 class DocumentInput(BaseModel):
     content: str
-    metadata: dict = {}
+    metadata: dict[str, Any] = {}
 
 
 class DocumentsUploadRequest(BaseModel):
@@ -17,7 +17,7 @@ class DocumentsUploadRequest(BaseModel):
     documents: List[DocumentInput]
 
 
-async def upload_documents(request: DocumentsUploadRequest) -> Dict:
+async def upload_documents(request: DocumentsUploadRequest) -> Dict[str, str]:
     """
     문서들을 벡터 스토어에 업로드하는 엔드포인트 로직
 

@@ -1,4 +1,5 @@
 import os
+from typing import Any, Dict
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI
@@ -18,7 +19,7 @@ assistant_router = APIRouter(prefix="/v1/assistant")
 
 
 @assistant_router.post("/auto-modify")
-async def query_rag(request: auto_modify_endpoint.AutoModifyQuery):
+async def query_rag(request: auto_modify_endpoint.AutoModifyQuery) -> Dict[str, Any]:
     return await auto_modify_endpoint.query_auto_modify(request)
 
 
@@ -27,7 +28,9 @@ document_router = APIRouter(prefix="/v1/documents")
 
 
 @document_router.post("/upload")
-async def upload_documents(request: document_endpoint.DocumentsUploadRequest):
+async def upload_documents(
+    request: document_endpoint.DocumentsUploadRequest,
+) -> Dict[str, Any]:
     return await document_endpoint.upload_documents(request)
 
 

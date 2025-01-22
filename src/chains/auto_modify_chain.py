@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Any, Dict
 
 import weaviate
 from langchain_community.vectorstores import Weaviate
@@ -13,7 +13,7 @@ class AutoModifyChain:
         client: weaviate.Client,
         index_name: str,
         embeddings: GoogleGenerativeAIEmbeddings,
-    ):
+    ) -> None:
         self.llm = ChatGoogleGenerativeAI(
             model="gemini-1.5-pro",
             temperature=0,
@@ -44,7 +44,7 @@ class AutoModifyChain:
             },
         )
 
-        self.chain = (
+        self.chain: Any = (
             {
                 "context": lambda x: retriever.invoke(x["query"]),
                 "user_setting": lambda x: x["user_setting"],
@@ -55,8 +55,8 @@ class AutoModifyChain:
             | (lambda x: {"output": x})
         )
 
-    def __call__(self, user_setting: str, context: str, query: str) -> Dict:
+    def __call__(self, user_setting: str, context: str, query: str) -> Dict[str, Any]:
         result = self.chain.invoke(
             {"user_setting": user_setting, "context": context, "query": query}
         )
-        return result
+        return {"output": result}

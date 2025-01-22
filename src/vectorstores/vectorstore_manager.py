@@ -17,7 +17,7 @@ class VectorStoreManager:
     _embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
     @classmethod
-    def get_instance(cls):
+    def get_instance(cls) -> "VectorStoreManager":
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
