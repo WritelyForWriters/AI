@@ -43,7 +43,7 @@ class VectorStoreManager:
                 "vectorizer": "none",
                 "properties": [
                     {"name": "text", "dataType": ["text"]},
-                    {"name": "tenant_id", "dataType": ["string"]},
+                    {"name": "tenant_id", "dataType": ["text"]},
                     {"name": "metadata", "dataType": ["text"]},
                 ],
             }
@@ -86,6 +86,18 @@ class VectorStoreManager:
                 client=client, index_name=index_name, embeddings=self._embeddings
             )
         return self._chains[tenant_id]
+
+    def initialize_tenant(self, tenant_id: str) -> None:
+        """테넌트 초기화 (스키마 생성 등)"""
+        pass
+
+    def delete_tenant(self, tenant_id: str) -> None:
+        """테넌트 삭제"""
+        pass
+
+    def tenant_exists(self, tenant_id: str) -> None:
+        """테넌트 존재 여부 확인"""
+        pass
 
 
 # 전역 매니저 인스턴스
