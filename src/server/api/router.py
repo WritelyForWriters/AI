@@ -3,8 +3,13 @@ from typing import Any, Dict
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI
+from fastapi.responses import StreamingResponse
 
-from src.server.endpoints import auto_modify_endpoint, document_endpoint
+from src.server.endpoints import (
+    auto_modify_endpoint,
+    document_endpoint,
+    feedback_endpoint,
+)
 
 load_dotenv()
 # 앱 설정
@@ -12,10 +17,20 @@ app = FastAPI(
     title="Research Assistant API",
     version="1.0",
     description="Literary research assistant API with multi-tenant support",
+    openapi_tags=[
+        {
+            "name": "assistant",
+            "description": "문학 작품 분석 및 피드백 관련 API",
+        },
+        {
+            "name": "document",
+            "description": "문서 관리 관련 API",
+        },
+    ],
 )
 
 # Assistant 관련 라우터
-assistant_router = APIRouter(prefix="/v1/assistant")
+assistant_router = APIRouter(prefix="/v1/assistant", tags=["assistant"])
 
 
 @assistant_router.post("/auto-modify")
@@ -23,8 +38,22 @@ async def query_rag(request: auto_modify_endpoint.AutoModifyQuery) -> Dict[str, 
     return await auto_modify_endpoint.query_auto_modify(request)
 
 
+@assistant_router.get("/feedback/stream")
+async def stream_feedback_endpoint(
+    tenant_id: str,
+    user_setting: str,
+    query: str,
+) -> StreamingResponse:
+    request = feedback_endpoint.FeedbackQuery(
+        tenant_id=tenant_id,
+        user_setting=user_setting,
+        query=query,
+    )
+    return await feedback_endpoint.stream_feedback(request)
+
+
 # 문서 관리 라우터
-document_router = APIRouter(prefix="/v1/documents")
+document_router = APIRouter(prefix="/v1/documents", tags=["document"])
 
 
 @document_router.post("/upload")
