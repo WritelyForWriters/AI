@@ -3,6 +3,7 @@ from typing import Any, AsyncGenerator, Dict
 import weaviate
 from langchain_community.vectorstores import Weaviate
 from langchain_core.messages import BaseMessage
+from langchain_core.runnables import RunnableSerializable
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 
 from src.prompts.feedback_prompts import FEEDBACK_PROMPT
@@ -45,7 +46,7 @@ class FeedbackChain:
             },
         )
 
-        self.chain = (
+        self.chain: RunnableSerializable[Dict[str, str], BaseMessage] = (
             {
                 "context": lambda x: retriever.invoke(x["query"]),
                 "user_setting": lambda x: x["user_setting"],
