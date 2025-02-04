@@ -46,7 +46,7 @@ class FeedbackChain:
             },
         )
 
-        self.chain: RunnableSerializable[Dict[str, str], BaseMessage] = (
+        self.chain: RunnableSerializable[Dict[str, Any], BaseMessage] = (
             {
                 "context": lambda x: retriever.invoke(x["query"]),
                 "user_setting": lambda x: x["user_setting"],
