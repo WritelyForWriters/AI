@@ -77,16 +77,6 @@ class VectorStoreManager:
                     print(f"Error embedding document: {str(e)}")
                     continue
 
-    def get_chain(self, tenant_id: str) -> AutoModifyChain:
-        """테넌트별 RAG 체인을 반환하거나 생성"""
-        if tenant_id not in self._chains:
-            client = self.get_client(tenant_id)
-            index_name = f"Tenant_{tenant_id}"  # 대문자로 시작하도록 수정
-            self._chains[tenant_id] = AutoModifyChain(
-                client=client, index_name=index_name, embeddings=self._embeddings
-            )
-        return self._chains[tenant_id]
-
     def initialize_tenant(self, tenant_id: str) -> None:
         """테넌트 초기화 (스키마 생성 등)"""
         pass
