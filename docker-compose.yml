@@ -2,9 +2,7 @@ version: '3.8'
 
 services:
   api:
-    build: 
-      context: .
-      dockerfile: Dockerfile
+    image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
     ports:
       - "8000:8000"
     environment:
@@ -14,6 +12,11 @@ services:
     depends_on:
       - redis
       - weaviate
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   weaviate:
     image: semitechnologies/weaviate:1.24.1

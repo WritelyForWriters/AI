@@ -14,9 +14,9 @@ from src.server.endpoints import (
 load_dotenv()
 # 앱 설정
 app = FastAPI(
-    title="Research Assistant API",
+    title="AI Assistant API",
     version="1.0",
-    description="Literary research assistant API with multi-tenant support",
+    description="Literary AI assistant API with multi-tenant support",
     openapi_tags=[
         {
             "name": "assistant",
@@ -66,6 +66,13 @@ async def upload_documents(
 # 라우터들을 앱에 포함
 app.include_router(assistant_router)
 app.include_router(document_router)
+
+
+@app.get("/health", tags=["health"])
+async def health_check() -> Dict[str, str]:
+    """서비스 헬스 체크 엔드포인트"""
+    return {"status": "healthy", "version": "1.0"}
+
 
 if __name__ == "__main__":
     import uvicorn
