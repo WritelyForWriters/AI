@@ -9,6 +9,20 @@ from src.prompts.feedback_prompts import FEEDBACK_PROMPT
 
 
 class FeedbackChain:
+    _instances: Dict[str, "FeedbackChain"] = {}
+
+    @classmethod
+    def get_instance(
+        cls,
+        client: weaviate.Client,
+        index_name: str,
+        embeddings: GoogleGenerativeAIEmbeddings,
+    ) -> "FeedbackChain":
+        tenant_id = index_name.split("_")[1]
+        if tenant_id not in cls._instances:
+            cls._instances[tenant_id] = cls(client, index_name, embeddings)
+        return cls._instances[tenant_id]
+
     def __init__(
         self,
         client: weaviate.Client,
