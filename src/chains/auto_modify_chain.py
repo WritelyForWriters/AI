@@ -9,6 +9,20 @@ from src.prompts.auto_modify_prompts import AUTO_MODIFY_PROMPT
 
 
 class AutoModifyChain:
+    _instances: Dict[str, "AutoModifyChain"] = {}
+
+    @classmethod
+    def get_instance(
+        cls,
+        client: weaviate.Client,
+        index_name: str,
+        embeddings: GoogleGenerativeAIEmbeddings,
+    ) -> "AutoModifyChain":
+        tenant_id = index_name.split("_")[1]
+        if tenant_id not in cls._instances:
+            cls._instances[tenant_id] = cls(client, index_name, embeddings)
+        return cls._instances[tenant_id]
+
     def __init__(
         self,
         client: weaviate.Client,
@@ -53,7 +67,6 @@ class AutoModifyChain:
             }
             | AUTO_MODIFY_PROMPT
             | self.llm
-            | (lambda x: {"output": x})
         )
 
     def __call__(self, user_setting: str, query: str) -> Dict[str, Any]:
@@ -63,7 +76,6 @@ class AutoModifyChain:
     async def astream(
         self, user_setting: str, query: str
     ) -> AsyncGenerator[BaseMessage, None]:
-        """비동기 스트리밍 메서드"""
         async for chunk in self.chain.astream(
             {"user_setting": user_setting, "query": query}
         ):

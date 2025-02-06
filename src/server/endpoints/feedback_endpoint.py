@@ -17,12 +17,9 @@ class FeedbackQuery(BaseModel):
 async def stream_feedback(request: FeedbackQuery) -> StreamingResponse:
     """피드백을 스트리밍으로 반환하는 핸들러"""
     try:
-        # 벡터스토어 설정
         client = vectorstore_manager.get_client(request.tenant_id)
         index_name = f"Tenant_{request.tenant_id}"
-
-        # 피드백 체인 생성
-        chain = FeedbackChain(
+        chain = FeedbackChain.get_instance(
             client=client,
             index_name=index_name,
             embeddings=vectorstore_manager._embeddings,
@@ -37,6 +34,4 @@ async def stream_feedback(request: FeedbackQuery) -> StreamingResponse:
         return StreamingResponse(generate(), media_type="text/event-stream")
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=str(e)
-        ) from e  # 원인이 되는 예외를 명시적으로 연결
+        raise HTTPException(status_code=500, detail=str(e)) from e
