@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI
 from fastapi.responses import StreamingResponse
 
+from src.server.docs.api_docs import AUTO_MODIFY_DOCS, AUTO_MODIFY_STREAM_DOCS
 from src.server.endpoints import (
     auto_modify_endpoint,
     document_endpoint,
@@ -33,9 +34,22 @@ app = FastAPI(
 assistant_router = APIRouter(prefix="/v1/assistant", tags=["assistant"])
 
 
-@assistant_router.post("/auto-modify")
+@assistant_router.post(
+    "/auto-modify",
+    **AUTO_MODIFY_DOCS,
+)
 async def query_rag(request: auto_modify_endpoint.AutoModifyQuery) -> Dict[str, Any]:
     return await auto_modify_endpoint.query_auto_modify(request)
+
+
+@assistant_router.post(
+    "/auto-modify/stream",
+    **AUTO_MODIFY_STREAM_DOCS,
+)
+async def stream_auto_modify_endpoint(
+    request: auto_modify_endpoint.AutoModifyQuery,
+) -> StreamingResponse:
+    return await auto_modify_endpoint.stream_auto_modify(request)
 
 
 @assistant_router.get("/feedback/stream")

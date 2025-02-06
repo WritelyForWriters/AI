@@ -1,6 +1,7 @@
-from typing import Any, Dict
+from typing import Any, AsyncGenerator, Dict
 
 import weaviate
+from langchain.schema import BaseMessage
 from langchain_community.vectorstores import Weaviate
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 
@@ -55,8 +56,15 @@ class AutoModifyChain:
             | (lambda x: {"output": x})
         )
 
-    def __call__(self, user_setting: str, context: str, query: str) -> Dict[str, Any]:
-        result = self.chain.invoke(
-            {"user_setting": user_setting, "context": context, "query": query}
-        )
+    def __call__(self, user_setting: str, query: str) -> Dict[str, Any]:
+        result = self.chain.invoke({"user_setting": user_setting, "query": query})
         return {"output": result}
+
+    async def astream(
+        self, user_setting: str, query: str
+    ) -> AsyncGenerator[BaseMessage, None]:
+        """비동기 스트리밍 메서드"""
+        async for chunk in self.chain.astream(
+            {"user_setting": user_setting, "query": query}
+        ):
+            yield chunk
