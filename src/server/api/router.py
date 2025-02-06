@@ -36,7 +36,9 @@ assistant_router = APIRouter(prefix="/v1/assistant", tags=["assistant"])
 
 @assistant_router.post(
     "/auto-modify",
-    **AUTO_MODIFY_DOCS,
+    summary=AUTO_MODIFY_DOCS["summary"],
+    description=AUTO_MODIFY_DOCS["description"],
+    responses=AUTO_MODIFY_DOCS["responses"],
 )
 async def query_rag(request: auto_modify_endpoint.AutoModifyQuery) -> Dict[str, Any]:
     return await auto_modify_endpoint.query_auto_modify(request)
@@ -44,7 +46,9 @@ async def query_rag(request: auto_modify_endpoint.AutoModifyQuery) -> Dict[str, 
 
 @assistant_router.post(
     "/auto-modify/stream",
-    **AUTO_MODIFY_STREAM_DOCS,
+    summary=AUTO_MODIFY_STREAM_DOCS["summary"],
+    description=AUTO_MODIFY_STREAM_DOCS["description"],
+    responses=AUTO_MODIFY_STREAM_DOCS["responses"],
 )
 async def stream_auto_modify_endpoint(
     request: auto_modify_endpoint.AutoModifyQuery,
