@@ -1,5 +1,7 @@
+from typing import Any, Dict
+
 # Auto Modify API 문서
-AUTO_MODIFY_DOCS = {
+AUTO_MODIFY_DOCS: Dict[str, Any] = {
     "summary": "자동 수정 API",
     "description": """
     입력된 텍스트에 대한 자동 수정 제안을 제공합니다.
@@ -29,7 +31,7 @@ AUTO_MODIFY_DOCS = {
     },
 }
 
-AUTO_MODIFY_STREAM_DOCS = {
+AUTO_MODIFY_STREAM_DOCS: Dict[str, Any] = {
     "summary": "자동 수정 스트리밍 API",
     "description": """
     입력된 텍스트에 대한 자동 수정 제안을 스트리밍 방식으로 제공합니다.
