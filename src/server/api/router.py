@@ -5,7 +5,12 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI
 from fastapi.responses import StreamingResponse
 
-from src.server.docs.api_docs import AUTO_MODIFY_DOCS, AUTO_MODIFY_STREAM_DOCS
+from src.server.docs.api_docs import (
+    AUTO_MODIFY_DOCS,
+    AUTO_MODIFY_STREAM_DOCS,
+    FEEDBACK_DOCS,
+    FEEDBACK_STREAM_DOCS,
+)
 from src.server.endpoints import (
     auto_modify_endpoint,
     document_endpoint,
@@ -56,17 +61,27 @@ async def stream_auto_modify_endpoint(
     return await auto_modify_endpoint.stream_auto_modify(request)
 
 
-@assistant_router.get("/feedback/stream")
+@assistant_router.post(
+    "/feedback",
+    summary=FEEDBACK_DOCS["summary"],
+    description=FEEDBACK_DOCS["description"],
+    responses=FEEDBACK_DOCS["responses"],
+)
+async def query_feedback_endpoint(
+    request: feedback_endpoint.FeedbackQuery,
+) -> Dict[str, Any]:
+    return await feedback_endpoint.query_feedback(request)
+
+
+@assistant_router.post(
+    "/feedback/stream",
+    summary=FEEDBACK_STREAM_DOCS["summary"],
+    description=FEEDBACK_STREAM_DOCS["description"],
+    responses=FEEDBACK_STREAM_DOCS["responses"],
+)
 async def stream_feedback_endpoint(
-    tenant_id: str,
-    user_setting: str,
-    query: str,
+    request: feedback_endpoint.FeedbackQuery,
 ) -> StreamingResponse:
-    request = feedback_endpoint.FeedbackQuery(
-        tenant_id=tenant_id,
-        user_setting=user_setting,
-        query=query,
-    )
     return await feedback_endpoint.stream_feedback(request)
 
 

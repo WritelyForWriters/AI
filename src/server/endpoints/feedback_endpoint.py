@@ -1,6 +1,6 @@
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Dict
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -12,6 +12,33 @@ class FeedbackQuery(BaseModel):
     user_setting: str
     query: str
     tenant_id: str
+
+
+async def query_feedback(request: FeedbackQuery) -> Dict[str, str]:
+    """
+    구간 피드백 체인을 사용하여 쿼리에 응답하는 엔드포인트 로직
+
+    Args:
+        request: 테넌트 ID와 쿼리를 포함한 요청
+
+    Returns:
+        Dict: 구간 피드백 체인의 응답
+    """
+    try:
+        client = vectorstore_manager.get_client(request.tenant_id)
+        index_name = f"Tenant_{request.tenant_id}"
+        chain = FeedbackChain.get_instance(
+            client=client,
+            index_name=index_name,
+            embeddings=vectorstore_manager._embeddings,
+        )
+        result = chain(request.user_setting, request.query)
+        return {"status": "success", "result": result["output"]}
+    except Exception as err:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to process feedback",
+        ) from err
 
 
 async def stream_feedback(request: FeedbackQuery) -> StreamingResponse:
