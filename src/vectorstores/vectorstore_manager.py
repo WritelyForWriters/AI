@@ -3,6 +3,7 @@ from typing import Dict, List
 import weaviate
 from dotenv import load_dotenv
 from langchain.schema import Document
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 from src.chains.auto_modify_chain import AutoModifyChain
@@ -50,31 +51,35 @@ class VectorStoreManager:
             client.schema.create_class(class_obj)
 
     def add_documents(self, tenant_id: str, documents: List[Document]) -> None:
-        """문서들을 테넌트의 벡터스토어에 추가"""
+        """문서들을 청킹하여 테넌트의 벡터스토어에 추가"""
         client = self.get_client(tenant_id)
-        index_name = f"Tenant_{tenant_id}"  # 대문자로 시작하도록 수정
+        index_name = f"Tenant_{tenant_id}"
 
-        # 문서를 배치로 처리
-        batch = client.batch.configure(batch_size=50)  # 배치 크기 감소
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=400,
+            chunk_overlap=50,
+            length_function=len,
+            is_separator_regex=False,
+        )
+
+        batch = client.batch.configure(batch_size=50)
 
         with batch:
-            for doc in documents:
+            chunks = text_splitter.split_documents(documents)
+            for chunk in chunks:
                 try:
-                    # 임베딩 생성
-                    embedding = self._embeddings.embed_query(doc.page_content)
-
-                    # Weaviate에 데이터 추가
+                    embedding = self._embeddings.embed_query(chunk.page_content)
                     client.batch.add_data_object(
                         data_object={
-                            "text": doc.page_content,
+                            "text": chunk.page_content,
                             "tenant_id": tenant_id,
-                            "metadata": str(doc.metadata),
+                            "metadata": str(chunk.metadata),
                         },
                         class_name=index_name,
                         vector=embedding,
                     )
                 except Exception as e:
-                    print(f"Error embedding document: {str(e)}")
+                    print(f"Error embedding chunk: {str(e)}")
                     continue
 
     def initialize_tenant(self, tenant_id: str) -> None:
