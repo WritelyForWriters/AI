@@ -9,6 +9,7 @@ RESEARCH_DOCS: Dict[str, Any] = {
     요청 파라미터:
     - user_setting: 작품 설정 및 컨텍스트 정보
     - query: 리서치가 필요한 주제/질문
+    - session_id: (선택) 대화 기록을 유지하기 위한 세션 식별자
     """,
     "responses": {
         200: {
@@ -38,6 +39,7 @@ RESEARCH_STREAM_DOCS: Dict[str, Any] = {
     요청 파라미터:
     - user_setting: 작품 설정 및 컨텍스트 정보
     - query: 리서치가 필요한 주제/질문
+    - session_id: (선택) 대화 기록을 유지하기 위한 세션 식별자
     """,
     "responses": {
         200: {

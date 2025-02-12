@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, Dict
+from typing import AsyncGenerator, Dict, Optional
 
 from fastapi import HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -10,6 +10,7 @@ from src.chains.research_chain import ResearchChain
 class ResearchQuery(BaseModel):
     user_setting: str
     query: str
+    session_id: Optional[str] = None
 
 
 async def query_research(request: ResearchQuery) -> Dict[str, str]:
@@ -23,7 +24,7 @@ async def query_research(request: ResearchQuery) -> Dict[str, str]:
         Dict: 리서치 체인의 응답
     """
     try:
-        chain = ResearchChain.get_instance()
+        chain = ResearchChain.get_instance(request.session_id)
         result = chain(request.user_setting, request.query)
         return {"status": "success", "result": result["output"]}
     except Exception as err:

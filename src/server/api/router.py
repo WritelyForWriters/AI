@@ -11,7 +11,6 @@ from src.server.docs.api_docs import (
     FEEDBACK_DOCS,
     FEEDBACK_STREAM_DOCS,
     RESEARCH_DOCS,
-    RESEARCH_STREAM_DOCS,
 )
 from src.server.endpoints import (
     auto_modify_endpoint,
@@ -100,16 +99,17 @@ async def query_research_endpoint(
     return await research_endpoint.query_research(request)
 
 
-@assistant_router.post(
-    "/research/stream",
-    summary=RESEARCH_STREAM_DOCS["summary"],
-    description=RESEARCH_STREAM_DOCS["description"],
-    responses=RESEARCH_STREAM_DOCS["responses"],
-)
-async def stream_research_endpoint(
-    request: research_endpoint.ResearchQuery,
-) -> StreamingResponse:
-    return await research_endpoint.stream_research(request)
+# TODO: 스트리밍 기능 추가 후 활성화
+# @assistant_router.post(
+#     "/research/stream",
+#     summary=RESEARCH_STREAM_DOCS["summary"],
+#     description=RESEARCH_STREAM_DOCS["description"],
+#     responses=RESEARCH_STREAM_DOCS["responses"],
+# )
+# async def stream_research_endpoint(
+#     request: research_endpoint.ResearchQuery,
+# ) -> StreamingResponse:
+#     return await research_endpoint.stream_research(request)
 
 
 # 문서 관리 라우터
