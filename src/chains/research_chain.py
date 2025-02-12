@@ -46,7 +46,7 @@ class ResearchChain:
         self.memory = RedisConversationMemory(session_id) if session_id else None
 
         # 1. 검색 쿼리 생성 체인
-        self.query_chain = (
+        self.query_chain: Any = (
             {
                 "chat_history": lambda x: self.memory.load_memory_variables({})[
                     "chat_history"
@@ -61,7 +61,7 @@ class ResearchChain:
         )
 
         # 2. 검색 체인 (최종 응답)
-        self.chain = (
+        self.chain: Any = (
             {
                 "query": lambda x: self.query_chain.invoke(x).content,
             }
