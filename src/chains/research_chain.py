@@ -9,7 +9,6 @@ from src.prompts.research_prompts import (
     QUERY_GENERATION_PROMPT,
     SEARCH_PROMPT,
 )
-from src.server.config import settings
 
 
 class ResearchChain:
@@ -38,7 +37,6 @@ class ResearchChain:
         # 검색용 Perplexity
         self.search_llm = ChatPerplexity(
             temperature=0,
-            api_key=settings.PPLX_API_KEY,
             model="llama-3.1-sonar-small-128k-online",
             timeout=10,
         )

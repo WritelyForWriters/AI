@@ -1,3 +1,4 @@
+import os
 from typing import Dict, List
 
 import weaviate
@@ -27,7 +28,7 @@ class VectorStoreManager:
         """테넌트별 Weaviate 클라이언트를 반환하거나 생성"""
         if tenant_id not in self._clients:
             self._clients[tenant_id] = weaviate.Client(
-                url="http://weaviate:8080",
+                url=os.getenv("WEAVIATE_URL"),
                 additional_headers={"X-Tenant-Id": tenant_id},
             )
             self._ensure_schema(tenant_id)

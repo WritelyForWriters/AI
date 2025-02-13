@@ -1,16 +1,18 @@
+import os
 from typing import Any, Dict, List
 
+from dotenv import load_dotenv
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.schema import BaseMessage
 from langchain_community.chat_message_histories import RedisChatMessageHistory
 
-from src.server.config import settings
+load_dotenv()
 
 
 class RedisConversationMemory(ConversationBufferWindowMemory):
     def __init__(self, session_id: str, k: int = 5, ttl: int = 3600):
         message_history = RedisChatMessageHistory(
-            url=f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}",
+            url=f"redis://{os.getenv("REDIS_HOST")}:{os.getenv("REDIS_PORT")}",
             session_id=session_id,
             ttl=ttl,
         )
