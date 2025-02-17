@@ -2,6 +2,10 @@ version: '3.8'
 
 services:
   api:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#  api:
     image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
     ports:
       - "8000:8000"

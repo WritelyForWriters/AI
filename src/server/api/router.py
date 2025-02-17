@@ -17,6 +17,8 @@ from src.server.endpoints import (
     document_endpoint,
     feedback_endpoint,
     research_endpoint,
+    user_modify_endpoint
+
 )
 
 load_dotenv()
@@ -122,10 +124,19 @@ async def upload_documents(
 ) -> Dict[str, Any]:
     return await document_endpoint.upload_documents(request)
 
+# TODO : 수동 수정 기능 라우터 추가
+user_router = APIRouter(prefix="/v1/user-modify", tags=["assistant"])
+
+
+@user_router.post("/")
+async def modify_text(request: user_modify_endpoint.UserModifyQuery) -> Dict[str, Any]:
+    return await user_modify_endpoint.query_user_modify(request)
+
 
 # 라우터들을 앱에 포함
 app.include_router(assistant_router)
 app.include_router(document_router)
+app.include_router(user_router)
 
 
 @app.get("/health", tags=["health"])
