@@ -1,15 +1,16 @@
-from typing import AsyncGenerator, Dict
+from typing import AsyncGenerator, Dict, List, Union
 
 from fastapi import HTTPException, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from src.chains.feedback_chain import FeedbackChain
+from src.server.models.story_settings import settings_to_xml
 from src.vectorstores.vectorstore_manager import vectorstore_manager
 
 
 class FeedbackQuery(BaseModel):
-    user_setting: str
+    user_setting: Dict[str, Union[Dict[str, str], List[Dict[str, str]]]]
     query: str
     tenant_id: str
 
@@ -32,7 +33,7 @@ async def query_feedback(request: FeedbackQuery) -> Dict[str, str]:
             index_name=index_name,
             embeddings=vectorstore_manager._embeddings,
         )
-        result = chain(request.user_setting, request.query)
+        result = chain(settings_to_xml(request.user_setting), request.query)
         return {"status": "success", "result": result["output"]}
     except Exception as err:
         raise HTTPException(
@@ -53,7 +54,9 @@ async def stream_feedback(request: FeedbackQuery) -> StreamingResponse:
         )
 
         async def generate() -> AsyncGenerator[str, None]:
-            async for chunk in chain.astream(request.user_setting, request.query):
+            async for chunk in chain.astream(
+                settings_to_xml(request.user_setting), request.query
+            ):
                 if chunk:
                     yield f"data: {chunk.content}\n\n"
             yield "data: [DONE]\n\n"
