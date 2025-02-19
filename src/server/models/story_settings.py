@@ -58,15 +58,27 @@ class CustomFieldSettings(BaseModel):
     custom_field_content: Optional[str] = None
 
 
+def create_empty_character_list() -> List[CharacterSettings]:
+    return []
+
+
+def create_empty_custom_field_list() -> List[CustomFieldSettings]:
+    return []
+
+
 class StorySettings(BaseModel):
     """소설 설정 모델"""
 
     synopsis: Optional[SynopsisSettings] = Field(default_factory=SynopsisSettings)
     worldview: Optional[WorldviewSettings] = Field(default_factory=WorldviewSettings)
-    character: Optional[List[CharacterSettings]] = Field(default_factory=list)
+    character: Optional[List[CharacterSettings]] = Field(
+        default_factory=create_empty_character_list
+    )
     plot: Optional[PlotSettings] = Field(default_factory=PlotSettings)
     ideanote: Optional[IdeanoteSettings] = Field(default_factory=IdeanoteSettings)
-    custom_field: Optional[List[CustomFieldSettings]] = Field(default_factory=list)
+    custom_field: Optional[List[CustomFieldSettings]] = Field(
+        default_factory=create_empty_custom_field_list
+    )
 
 
 def settings_to_xml(
