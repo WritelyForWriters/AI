@@ -52,7 +52,6 @@ assistant_router = APIRouter(prefix="/v1/assistant", tags=["assistant"])
 async def query_rag(request: auto_modify_endpoint.AutoModifyQuery) -> Dict[str, Any]:
     return await auto_modify_endpoint.query_auto_modify(request)
 
-
 @assistant_router.post(
     "/auto-modify/stream",
     summary=AUTO_MODIFY_STREAM_DOCS["summary"],
@@ -124,7 +123,7 @@ async def upload_documents(
 ) -> Dict[str, Any]:
     return await document_endpoint.upload_documents(request)
 
-# TODO : 수동 수정 기능 라우터 추가
+# TODO : 수동 수정 기능 라우터
 user_router = APIRouter(prefix="/v1/user-modify", tags=["assistant"])
 
 
