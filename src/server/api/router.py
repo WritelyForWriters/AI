@@ -123,7 +123,7 @@ async def upload_documents(
 ) -> Dict[str, Any]:
     return await document_endpoint.upload_documents(request)
 
-# TODO : 수동 수정 기능 라우터 설정
+# TODO : 수동 수정 기능 라우터
 user_router = APIRouter(prefix="/v1/user-modify", tags=["assistant"])
 
 
