@@ -29,7 +29,7 @@ cp .env.example .env
 ### Docker Setup
 1. Build and run with Docker Compose
 ```bash
-docker-compose up --build
+docker compose -f docker-compose-dev.yml up --build
 ```
 
 The API server will be available at `http://localhost:8000`
