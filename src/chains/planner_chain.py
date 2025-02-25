@@ -5,7 +5,6 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 
 from src.prompts.planner_prompts import PLANNER_PROMPT
 
-# 생성 가능한 항목들 정의
 PlannerSection = Literal[
     "example",  # 예시문장
     # 세계관
@@ -54,8 +53,7 @@ class PlannerChain:
             max_retries=2,
         )
 
-        # 생성 체인
-        self.chain = (
+        self.chain: Any = (
             {
                 "genre": lambda x: x["genre"],
                 "logline": lambda x: x["logline"],
