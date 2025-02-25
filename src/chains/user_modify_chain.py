@@ -37,10 +37,10 @@ class UserModifyChain:
         embeddings: GoogleGenerativeAIEmbeddings,
     ) -> None:
         safety_config: SafetySettings = {
-            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,  # type: ignore
+            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,  # type: ignore
+            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,  # type: ignore
+            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,  # type: ignore
         }
 
         self.llm = ChatGoogleGenerativeAI(
@@ -50,7 +50,7 @@ class UserModifyChain:
             timeout=None,
             max_retries=2,
             safety_settings=safety_config,
-        )  # type: ignore
+        )
 
         self.vectorstore = Weaviate(
             client=client,
