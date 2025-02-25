@@ -10,7 +10,7 @@ PLANNER_DOCS: Dict[str, Any] = {
     - logline: 소설의 핵심 줄거리
     - prompt: 생성에 대한 추가 지시사항
     - section: 생성할 섹션 (예시문장/세계관/줄거리 등)
-    - session_id: (선택) 대화 기록을 유지하기 위한 세션 식별자
+    - tenant_id: (선택) 대화 기록을 유지하기 위한 세션 식별자
     
     생성 가능한 섹션:
     - example: 예시문장
@@ -49,7 +49,7 @@ PLANNER_STREAM_DOCS: Dict[str, Any] = {
     - logline: 소설의 핵심 줄거리
     - prompt: 생성에 대한 추가 지시사항
     - section: 생성할 섹션 (예시문장/세계관/줄거리 등)
-    - session_id: (선택) 대화 기록을 유지하기 위한 세션 식별자
+    - tenant_id: (선택) 대화 기록을 유지하기 위한 세션 식별자
     """,
     "responses": {
         200: {
