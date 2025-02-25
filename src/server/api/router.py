@@ -11,12 +11,15 @@ from src.server.docs.api_docs import (
     FEEDBACK_DOCS,
     FEEDBACK_STREAM_DOCS,
     RESEARCH_DOCS,
+    USER_MODIFY_DOCS,
+    USER_MODIFY_STREAM_DOCS,
 )
 from src.server.endpoints import (
     auto_modify_endpoint,
     document_endpoint,
     feedback_endpoint,
     research_endpoint,
+    user_modify_endpoint,
 )
 
 load_dotenv()
@@ -61,6 +64,28 @@ async def stream_auto_modify_endpoint(
     request: auto_modify_endpoint.AutoModifyQuery,
 ) -> StreamingResponse:
     return await auto_modify_endpoint.stream_auto_modify(request)
+
+
+@assistant_router.post(
+    "/user-modify",
+    summary=USER_MODIFY_DOCS["summary"],
+    description=USER_MODIFY_DOCS["description"],
+    responses=USER_MODIFY_DOCS["responses"],
+)
+async def modify_text(request: user_modify_endpoint.UserModifyQuery) -> Dict[str, Any]:
+    return await user_modify_endpoint.query_user_modify(request)
+
+
+@assistant_router.post(
+    "/user-modify/stream",
+    summary=USER_MODIFY_STREAM_DOCS["summary"],
+    description=USER_MODIFY_STREAM_DOCS["description"],
+    responses=USER_MODIFY_STREAM_DOCS["responses"],
+)
+async def stream_user_modify_endpoint(
+    request: user_modify_endpoint.UserModifyQuery,
+) -> StreamingResponse:
+    return await user_modify_endpoint.stream_user_modify(request)
 
 
 @assistant_router.post(
