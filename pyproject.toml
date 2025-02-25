@@ -59,7 +59,9 @@ warn_unused_ignores = true
 warn_return_any = true
 strict = true
 ignore_missing_imports = true
-disable_error_code = ["misc"]  # FastAPI 데코레이터 타입 에러 무시
+disable_error_code = ["misc"]
+strict_enums = true
+disallow_subclassing_any = false
 
 [[tool.mypy.overrides]]
 module = ["fastapi.*"]
