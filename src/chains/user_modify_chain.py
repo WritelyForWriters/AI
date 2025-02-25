@@ -49,7 +49,7 @@ class UserModifyChain:
             max_tokens=None,
             timeout=None,
             max_retries=2,
-            safety_settings=safety_config,
+            safety_settings=safety_config,  # type: ignore[arg-type]
         )
 
         self.vectorstore = Weaviate(
