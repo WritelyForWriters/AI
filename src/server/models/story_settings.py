@@ -1,6 +1,11 @@
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
+
+
+class CustomFieldSettings(BaseModel):
+    custom_field_name: Optional[str] = None
+    custom_field_content: Optional[str] = None
 
 
 class SynopsisSettings(BaseModel):
@@ -25,7 +30,7 @@ class WorldviewSettings(BaseModel):
     species: Optional[str] = None
     occupation: Optional[str] = None
     conflict: Optional[str] = None
-    custom_field: Optional[str] = None
+    custom_fields: Optional[List[CustomFieldSettings]] = None
 
 
 class CharacterSettings(BaseModel):
@@ -38,24 +43,16 @@ class CharacterSettings(BaseModel):
     personality: Optional[str] = None
     characteristic: Optional[str] = None
     relationship: Optional[str] = None
+    custom_fields: Optional[List[CustomFieldSettings]] = None
 
 
 class PlotSettings(BaseModel):
-    exposition: Optional[str] = None
-    complication: Optional[str] = None
-    climax: Optional[str] = None
-    resolution: Optional[str] = None
+    content: Optional[str] = None
 
 
 class IdeanoteSettings(BaseModel):
     idea_title: Optional[str] = None
     idea_content: Optional[str] = None
-
-
-class CustomFieldSettings(BaseModel):
-    section_code: Optional[str] = None
-    custom_field_name: Optional[str] = None
-    custom_field_content: Optional[str] = None
 
 
 def create_empty_character_list() -> List[CharacterSettings]:
@@ -76,13 +73,10 @@ class StorySettings(BaseModel):
     )
     plot: Optional[PlotSettings] = Field(default_factory=PlotSettings)
     ideanote: Optional[IdeanoteSettings] = Field(default_factory=IdeanoteSettings)
-    custom_field: Optional[List[CustomFieldSettings]] = Field(
-        default_factory=create_empty_custom_field_list
-    )
 
 
 def settings_to_xml(
-    settings: Dict[str, Union[Dict[str, str], List[Dict[str, str]]]],
+    settings: Dict[str, Any],
 ) -> str:
     """설정 딕셔너리를 XML 문자열로 변환"""
     xml_parts: List[str] = []
@@ -91,21 +85,47 @@ def settings_to_xml(
         if not section_data:
             continue
 
-        if section_name in ["character", "custom_field"]:
-            # 리스트 형태의 섹션 처리
+        if section_name == "character":
             if isinstance(section_data, list):
                 for idx, item in enumerate(section_data, 1):
                     xml_parts.append(f"  <{section_name}_{idx}>")
                     for field, value in item.items():
-                        if value:
+                        if (
+                            field == "custom_fields"
+                            and value
+                            and isinstance(value, list)
+                        ):
+                            for cf_idx, cf_item in enumerate(value, 1):
+                                xml_parts.append(f"    <custom_field_{cf_idx}>")
+                                if isinstance(cf_item, dict):
+                                    for cf_field, cf_value in cf_item.items():
+                                        if cf_value:
+                                            xml_parts.append(
+                                                f"      <{cf_field}>"
+                                                f"{cf_value}"
+                                                f"</{cf_field}>"
+                                            )
+                                xml_parts.append(f"    </custom_field_{cf_idx}>")
+                        elif value:
                             xml_parts.append(f"    <{field}>{value}</{field}>")
                     xml_parts.append(f"  </{section_name}_{idx}>")
         else:
-            # 일반 딕셔너리 섹션 처리
             if isinstance(section_data, dict):
                 xml_parts.append(f"  <{section_name}>")
                 for field, value in section_data.items():
-                    if value:
+                    if field == "custom_fields" and value and isinstance(value, list):
+                        for cf_idx, cf_item in enumerate(value, 1):
+                            xml_parts.append(f"    <custom_field_{cf_idx}>")
+                            if isinstance(cf_item, dict):
+                                for cf_field, cf_value in cf_item.items():
+                                    if cf_value:
+                                        xml_parts.append(
+                                            f"      <{cf_field}>"
+                                            f"{cf_value}"
+                                            f"</{cf_field}>"
+                                        )
+                            xml_parts.append(f"    </custom_field_{cf_idx}>")
+                    elif value:
                         xml_parts.append(f"    <{field}>{value}</{field}>")
                 xml_parts.append(f"  </{section_name}>")
 

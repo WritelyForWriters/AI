@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, Dict, List, Union
+from typing import Any, AsyncGenerator, Dict
 
 from fastapi import HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -11,7 +11,7 @@ from src.vectorstores.vectorstore_manager import vectorstore_manager
 
 class UserModifyQuery(BaseModel):
     tenant_id: str
-    user_setting: Dict[str, Union[Dict[str, str], List[Dict[str, str]]]]
+    user_setting: Dict[str, Any]
     query: str
     how_polish: str
 
@@ -37,7 +37,7 @@ async def query_user_modify(request: UserModifyQuery) -> Dict[str, str]:
             embeddings=vectorstore_manager._embeddings,
         )
         result = chain(settings_xml, request.query, request.how_polish)
-        return {"status": "success", "modified_text": result["output"]}
+        return {"status": "success", "result": result["output"]}
 
     except Exception as err:
         raise HTTPException(

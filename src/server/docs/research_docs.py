@@ -16,7 +16,7 @@ RESEARCH_DOCS: Dict[str, Any] = {
             logline: 로그라인,
             example: 예시
         }
-        - worldview: {
+        - world_view: {
             geography: 지리,
             history: 역사,
             politics: 정치,
@@ -30,7 +30,13 @@ RESEARCH_DOCS: Dict[str, Any] = {
             species: 종족,
             occupation: 직업,
             conflict: 갈등,
-            custom_field: 커스텀필드
+            custom_fields: [
+                {
+                    custom_field_name: 필드명,
+                    custom_field_content: 필드 내용
+                },
+                ...
+            ]
         }
         - character: [
             {
@@ -42,28 +48,24 @@ RESEARCH_DOCS: Dict[str, Any] = {
                 appearance: 외모,
                 personality: 성격,
                 characteristic: 특징,
-                relationship: 관계
+                relationship: 관계,
+                custom_fields: [
+                    {
+                        custom_field_name: 필드명,
+                        custom_field_content: 필드 내용
+                    },
+                    ...
+                ]
             },
             ...
         ]
         - plot: {
-            exposition: 발단,
-            complication: 전개,
-            climax: 위기,
-            resolution: 결말
+            content: 줄거리 내용
         }
-        - ideanote: {
+        - idea_note: {
             idea_title: 아이디어 제목,
             idea_content: 아이디어 내용
         }
-        - custom_field: [
-            {
-                section_code: 섹션 코드,
-                custom_field_name: 필드명,
-                custom_field_content: 필드 내용
-            },
-            ...
-        ]
     - query: 리서치가 필요한 주제/질문
     """,
     "responses": {
@@ -103,7 +105,7 @@ RESEARCH_STREAM_DOCS: Dict[str, Any] = {
             logline: 로그라인,
             example: 예시
         }
-        - worldview: {
+        - world_view: {
             geography: 지리,
             history: 역사,
             politics: 정치,
@@ -117,7 +119,13 @@ RESEARCH_STREAM_DOCS: Dict[str, Any] = {
             species: 종족,
             occupation: 직업,
             conflict: 갈등,
-            custom_field: 커스텀필드
+            custom_fields: [
+                {
+                    custom_field_name: 필드명,
+                    custom_field_content: 필드 내용
+                },
+                ...
+            ]
         }
         - character: [
             {
@@ -129,28 +137,24 @@ RESEARCH_STREAM_DOCS: Dict[str, Any] = {
                 appearance: 외모,
                 personality: 성격,
                 characteristic: 특징,
-                relationship: 관계
+                relationship: 관계,
+                custom_fields: [
+                    {
+                        custom_field_name: 필드명,
+                        custom_field_content: 필드 내용
+                    },
+                    ...
+                ]
             },
             ...
         ]
         - plot: {
-            exposition: 발단,
-            complication: 전개,
-            climax: 위기,
-            resolution: 결말
+            content: 줄거리 내용
         }
-        - ideanote: {
+        - idea_note: {
             idea_title: 아이디어 제목,
             idea_content: 아이디어 내용
         }
-        - custom_field: [
-            {
-                section_code: 섹션 코드,
-                custom_field_name: 필드명,
-                custom_field_content: 필드 내용
-            },
-            ...
-        ]
     """,
     "responses": {
         200: {
