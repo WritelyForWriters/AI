@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, Dict, List, Union
+from typing import Any, AsyncGenerator, Dict
 
 from fastapi import HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -10,7 +10,7 @@ from src.vectorstores.vectorstore_manager import vectorstore_manager
 
 
 class FeedbackQuery(BaseModel):
-    user_setting: Dict[str, Union[Dict[str, str], List[Dict[str, str]]]]
+    user_setting: Dict[str, Any]
     query: str
     tenant_id: str
 

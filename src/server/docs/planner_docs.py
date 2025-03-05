@@ -50,6 +50,13 @@ PLANNER_STREAM_DOCS: Dict[str, Any] = {
     - prompt: 생성에 대한 추가 지시사항
     - section: 생성할 섹션 (예시문장/세계관/줄거리 등)
     - tenant_id: 작품 식별자
+
+    생성 가능한 섹션:
+    - example: 예시문장
+    - geography, history, politics, society, religion:세계관(지리/역사/정치/사회/종교)
+    - economy, technology, lifestyle, language, culture:세계관(경제/기술/생활/언어/문화)
+    - species, occupation, conflict, custom_field:세계관(종족/직업/갈등/커스텀필드)
+    - introduction, development, crisis, conclusion:줄거리(발단/전개/위기/결말)
     """,
     "responses": {
         200: {

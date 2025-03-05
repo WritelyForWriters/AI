@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, Dict, List, Optional, Union
+from typing import Any, AsyncGenerator, Dict, Optional
 
 from fastapi import HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -9,7 +9,7 @@ from src.server.models.story_settings import settings_to_xml
 
 
 class ResearchQuery(BaseModel):
-    user_setting: Dict[str, Union[Dict[str, str], List[Dict[str, str]]]]
+    user_setting: Dict[str, Any]
     query: str
     session_id: Optional[str] = None
 
