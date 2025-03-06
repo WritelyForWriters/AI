@@ -3,6 +3,7 @@ from typing import Any, Dict
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 from src.server.docs.api_docs import (
@@ -45,6 +46,15 @@ app = FastAPI(
             "description": "문서 관리 관련 API",
         },
     ],
+)
+
+# TODO: 프로덕션 환경에서는 구체적인 오리진 지정 필요
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Assistant 관련 라우터
