@@ -9,6 +9,8 @@ from fastapi.responses import StreamingResponse
 from src.server.docs.api_docs import (
     AUTO_MODIFY_DOCS,
     AUTO_MODIFY_STREAM_DOCS,
+    DOCUMENT_BATCH_DOCS,
+    DOCUMENT_DOCS,
     FEEDBACK_DOCS,
     FEEDBACK_STREAM_DOCS,
     PLANNER_DOCS,
@@ -183,11 +185,28 @@ async def stream_planner_endpoint(
 
 
 # 문서 관리 라우터
-document_router = APIRouter(prefix="/v1/documents", tags=["document"])
+document_router = APIRouter(prefix="/v1/document", tags=["document"])
 
 
-@document_router.post("/upload")
-async def upload_documents(
+@document_router.post(
+    "/upload",
+    summary=DOCUMENT_DOCS["summary"],
+    description=DOCUMENT_DOCS["description"],
+    responses=DOCUMENT_DOCS["responses"],
+)
+async def upload_document_endpoint(
+    request: document_endpoint.DocumentUploadRequest,
+) -> Dict[str, Any]:
+    return await document_endpoint.upload_document(request)
+
+
+@document_router.post(
+    "/upload/batch",
+    summary=DOCUMENT_BATCH_DOCS["summary"],
+    description=DOCUMENT_BATCH_DOCS["description"],
+    responses=DOCUMENT_BATCH_DOCS["responses"],
+)
+async def upload_documents_endpoint(
     request: document_endpoint.DocumentsUploadRequest,
 ) -> Dict[str, Any]:
     return await document_endpoint.upload_documents(request)
