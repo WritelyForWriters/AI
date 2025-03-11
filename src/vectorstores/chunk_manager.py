@@ -79,7 +79,8 @@ class ChunkManager:
             return current_chunks, [], []
 
         try:
-            stored_chunks = json.loads(stored_chunks_json)
+            # Redis에서 가져온 값을 문자열 타입으로 처리
+            stored_chunks = json.loads(str(stored_chunks_json))
         except json.JSONDecodeError:
             self._store_chunk_info(redis_key, current_chunks)
             return current_chunks, [], []
@@ -172,7 +173,7 @@ class ChunkManager:
         chunks_json = json.dumps(chunks)
         self.redis_client.set(redis_key, chunks_json)
 
-    def get_document_chunks(self, tenant_id: str) -> Any:
+    def get_document_chunks(self, tenant_id: str) -> List[Dict[str, Any]]:
         """
         문서의 저장된 청크 정보 조회
 
@@ -189,8 +190,11 @@ class ChunkManager:
             return []
 
         try:
-            return json.loads(stored_chunks_json)
+            # 명시적인 타입 캐스팅을 사용하여 반환 타입 지정
+            chunks: List[Dict[str, Any]] = json.loads(str(stored_chunks_json))
+            return chunks
         except json.JSONDecodeError:
+            # 빈 리스트 반환하여 올바른 반환 타입 유지
             return []
 
     def _generate_hash(self, text: str) -> str:
