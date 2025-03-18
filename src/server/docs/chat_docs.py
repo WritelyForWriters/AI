@@ -1,9 +1,7 @@
-"""
-Chat API 문서 상수 정의
-"""
+from typing import Any, Dict
 
 # 채팅 API
-CHAT_DOCS = {
+CHAT_DOCS: Dict[str, Any] = {
     "summary": "일반 채팅 API",
     "description": """
     사용자의 질문에 대답하는 일반 채팅 API입니다.
@@ -38,7 +36,7 @@ CHAT_DOCS = {
 }
 
 # 채팅 스트리밍 API
-CHAT_STREAM_DOCS = {
+CHAT_STREAM_DOCS: Dict[str, Any] = {
     "summary": "일반 채팅 스트리밍 API",
     "description": """
     사용자의 질문에 대한 응답을 스트리밍으로 제공하는 일반 채팅 API입니다.
