@@ -66,7 +66,8 @@ RESEARCH_DOCS: Dict[str, Any] = {
             idea_title: 아이디어 제목,
             idea_content: 아이디어 내용
         }
-    - query: 리서치가 필요한 주제/질문
+    - query: 선택된 구간 정보 (작품의 일부분)
+    - user_input: 리서치가 필요한 주제/질문
     """,
     "responses": {
         200: {
@@ -95,7 +96,8 @@ RESEARCH_STREAM_DOCS: Dict[str, Any] = {
     
     요청 파라미터:
     - user_setting: 작품 설정 및 컨텍스트 정보
-    - query: 리서치가 필요한 주제/질문
+    - query: 선택된 구간 정보 (작품의 일부분)
+    - user_input: 리서치가 필요한 주제/질문
     - session_id: (선택) 대화 기록을 유지하기 위한 세션 식별자
     - user_setting: 작품 설정 및 컨텍스트 정보 (중첩 딕셔너리)
         - synopsis: {

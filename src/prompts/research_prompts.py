@@ -13,6 +13,7 @@ QUERY_GENERATION_PROMPT = ChatPromptTemplate.from_messages(
 <context>
     <user_setting>{user_setting}</user_setting>
     <chat_history>{chat_history}</chat_history>
+    <selected_text>{query}</selected_text>
 </context>
 
 <instructions>
@@ -20,6 +21,7 @@ QUERY_GENERATION_PROMPT = ChatPromptTemplate.from_messages(
         <primary>주어진 질문에 대한 검색 쿼리 생성</primary>
         <requirements>
             <item>이전 대화 내용과 작품 설정을 고려할 것</item>
+            <item>선택된 텍스트 구간이 있다면 참고할 것</item>
             <item>객관적이고 사실적인 정보를 얻을 수 있는 쿼리 작성</item>
             <item>검색에 효과적인 키워드 중심으로 작성</item>
             <item>불필요한 설명없이 쿼리만 반환</item>
@@ -28,7 +30,7 @@ QUERY_GENERATION_PROMPT = ChatPromptTemplate.from_messages(
 </instructions>
 ```""",
         ),
-        ("human", "{query}에 대한 검색 쿼리를 생성해주세요."),
+        ("human", "{user_input}에 대한 검색 쿼리를 생성해주세요."),
     ]
 )
 
@@ -42,6 +44,10 @@ SEARCH_PROMPT = ChatPromptTemplate.from_messages(
     <role>Research Assistant for Writers</role>
 </settings>
 
+<context>
+    <selected_text>{query}</selected_text>
+</context>
+
 <instructions>
     <task>
         <primary>작가를 위한 객관적인 정보 제공</primary>
@@ -50,6 +56,7 @@ SEARCH_PROMPT = ChatPromptTemplate.from_messages(
             <item>관련된 구체적인 예시나 사례 포함</item>
             <item>필요한 경우 역사적/문화적 맥락 설명</item>
             <item>작가의 창작에 도움되는 세부사항 강조</item>
+            <item>선택된 텍스트 구간이 있다면 이를 참고하여 응답</item>
         </requirements>
         <format>
             <structure>
@@ -62,6 +69,6 @@ SEARCH_PROMPT = ChatPromptTemplate.from_messages(
 </instructions>
 ```""",
         ),
-        ("human", "{query}"),
+        ("human", "{user_input}"),
     ]
 )

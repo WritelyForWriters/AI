@@ -37,7 +37,9 @@ class VectorStoreManager:
     def _ensure_schema(self, tenant_id: str) -> None:
         """테넌트의 스키마가 존재하는지 확인하고 없으면 생성"""
         client = self.get_client(tenant_id)
-        index_name = f"Tenant_{tenant_id}"  # 대문자로 시작
+        # UUID 형식 등 특수문자가 포함된 tenant_id를 안전하게 처리
+        safe_tenant_id = self._get_safe_index_name(tenant_id)
+        index_name = f"Tenant_{safe_tenant_id}"
 
         if not client.schema.exists(index_name):
             class_obj = {
@@ -51,10 +53,24 @@ class VectorStoreManager:
             }
             client.schema.create_class(class_obj)
 
+    def _get_safe_index_name(self, tenant_id: str) -> str:
+        """Weaviate 클래스 이름 제약사항에 맞게 tenant_id를 안전한 형식으로 변환"""
+        # UUID의 하이픈 제거 및 클래스 이름 제약사항 적용
+        # Weaviate 클래스 이름은 영숫자(a-zA-Z0-9)와 언더스코어(_)만 허용
+        import re
+
+        # 알파벳, 숫자, 언더스코어만 유지하고 나머지는 제거
+        safe_name = re.sub(r"[^a-zA-Z0-9_]", "", tenant_id)
+        # 비어있거나 숫자로 시작하면 접두사 추가
+        if not safe_name or safe_name[0].isdigit():
+            safe_name = "t" + safe_name
+        return safe_name
+
     def add_documents(self, tenant_id: str, documents: List[Document]) -> None:
         """문서들을 청킹하여 테넌트의 벡터스토어에 추가"""
         client = self.get_client(tenant_id)
-        index_name = f"Tenant_{tenant_id}"
+        safe_tenant_id = self._get_safe_index_name(tenant_id)
+        index_name = f"Tenant_{safe_tenant_id}"
 
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=400,
