@@ -9,6 +9,8 @@ from fastapi.responses import StreamingResponse
 from src.server.docs.api_docs import (
     AUTO_MODIFY_DOCS,
     AUTO_MODIFY_STREAM_DOCS,
+    CHAT_DOCS,
+    CHAT_STREAM_DOCS,
     DOCUMENT_BATCH_DOCS,
     DOCUMENT_DOCS,
     FEEDBACK_DOCS,
@@ -21,6 +23,7 @@ from src.server.docs.api_docs import (
 )
 from src.server.endpoints import (
     auto_modify_endpoint,
+    chat_endpoint,
     document_endpoint,
     feedback_endpoint,
     planner_endpoint,
@@ -141,6 +144,30 @@ async def query_research_endpoint(
     request: research_endpoint.ResearchQuery,
 ) -> Dict[str, Any]:
     return await research_endpoint.query_research(request)
+
+
+@assistant_router.post(
+    "/chat",
+    summary=CHAT_DOCS["summary"],
+    description=CHAT_DOCS["description"],
+    responses=CHAT_DOCS["responses"],
+)
+async def query_chat_endpoint(
+    request: chat_endpoint.ChatQuery,
+) -> Dict[str, Any]:
+    return await chat_endpoint.query_chat(request)
+
+
+@assistant_router.post(
+    "/chat/stream",
+    summary=CHAT_STREAM_DOCS["summary"],
+    description=CHAT_STREAM_DOCS["description"],
+    responses=CHAT_STREAM_DOCS["responses"],
+)
+async def stream_chat_endpoint(
+    request: chat_endpoint.ChatQuery,
+) -> StreamingResponse:
+    return await chat_endpoint.stream_chat(request)
 
 
 # TODO: 스트리밍 기능 추가 후 활성화

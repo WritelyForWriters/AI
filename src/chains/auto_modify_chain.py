@@ -18,7 +18,8 @@ class AutoModifyChain:
         index_name: str,
         embeddings: GoogleGenerativeAIEmbeddings,
     ) -> "AutoModifyChain":
-        tenant_id = index_name.split("_")[1]
+        tenant_id = index_name.split("_", 1)[1] if "_" in index_name else index_name
+
         if tenant_id not in cls._instances:
             cls._instances[tenant_id] = cls(client, index_name, embeddings)
         return cls._instances[tenant_id]
@@ -37,9 +38,11 @@ class AutoModifyChain:
             max_retries=2,
         )
 
+        tenant_id = index_name.split("_", 1)[1] if "_" in index_name else index_name
+
         self.vectorstore = Weaviate(
             client=client,
-            index_name="Tenant_" + index_name.split("_")[1],
+            index_name=index_name,
             text_key="text",
             embedding=embeddings,
             attributes=["tenant_id"],
@@ -54,7 +57,7 @@ class AutoModifyChain:
                 "where_filter": {
                     "path": ["tenant_id"],
                     "operator": "Equal",
-                    "valueString": index_name.split("_")[1],
+                    "valueString": tenant_id,
                 },
             },
         )

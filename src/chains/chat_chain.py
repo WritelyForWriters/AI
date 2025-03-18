@@ -1,21 +1,17 @@
 from typing import Any, AsyncGenerator, Dict, Optional
 
 from langchain.schema import BaseMessage
-from langchain_community.chat_models import ChatPerplexity
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from src.memory.redis_memory import RedisConversationMemory
-from src.prompts.research_prompts import (
-    QUERY_GENERATION_PROMPT,
-    SEARCH_PROMPT,
-)
+from src.prompts.chat_prompts import CHAT_PROMPT
 
 
-class ResearchChain:
-    _instances: Dict[str, "ResearchChain"] = {}
+class ChatChain:
+    _instances: Dict[str, "ChatChain"] = {}
 
     @classmethod
-    def get_instance(cls, session_id: Optional[str] = None) -> "ResearchChain":
+    def get_instance(cls, session_id: Optional[str] = None) -> "ChatChain":
         """싱글톤 인스턴스 반환"""
         if session_id:
             if session_id not in cls._instances:
@@ -27,24 +23,18 @@ class ResearchChain:
         return cls._instances["default"]
 
     def __init__(self, session_id: Optional[str] = None) -> None:
-        # 쿼리 생성용 Gemini
-        self.query_llm = ChatGoogleGenerativeAI(
+        # Gemini 2.0 Flash 모델 사용
+        self.llm = ChatGoogleGenerativeAI(
             model="gemini-2.0-flash",
-            temperature=0.3,
+            temperature=0.7,
             convert_system_message_to_human=True,
         )
 
-        # 검색용 Perplexity
-        self.search_llm = ChatPerplexity(
-            temperature=0,
-            model="llama-3.1-sonar-small-128k-online",
-            timeout=10,
-        )
-
+        # Redis를 통한 대화 기록 저장
         self.memory = RedisConversationMemory(session_id) if session_id else None
 
-        # 1. 검색 쿼리 생성 체인
-        self.query_chain: Any = (
+        # 채팅 체인
+        self.chain: Any = (
             {
                 "chat_history": lambda x: self.memory.load_memory_variables({})[
                     "chat_history"
@@ -55,18 +45,8 @@ class ResearchChain:
                 "query": lambda x: x["query"],
                 "user_input": lambda x: x["user_input"],
             }
-            | QUERY_GENERATION_PROMPT
-            | self.query_llm
-        )
-
-        # 2. 검색 체인 (최종 응답)
-        self.chain: Any = (
-            {
-                "query": lambda x: self.query_chain.invoke(x).content,
-                "user_input": lambda x: x["user_input"],
-            }
-            | SEARCH_PROMPT
-            | self.search_llm
+            | CHAT_PROMPT
+            | self.llm
         )
 
     def __call__(
