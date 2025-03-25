@@ -10,7 +10,7 @@ from src.server.models.story_settings import settings_to_xml
 
 class ChatQuery(BaseModel):
     user_setting: Dict[str, Any]
-    query: str  # 선택된 구간 정보
+    query: Optional[str] = None  # 선택된 구간 정보 (선택적)
     user_input: str  # 사용자 입력
     session_id: Optional[str] = None
 
@@ -28,7 +28,8 @@ async def query_chat(request: ChatQuery) -> Dict[str, str]:
     try:
         settings_xml = settings_to_xml(request.user_setting)
         chain = ChatChain.get_instance(request.session_id)
-        result = chain(settings_xml, request.query, request.user_input)
+        query = request.query or ""  # None일 경우 빈 문자열 사용
+        result = chain(settings_xml, query, request.user_input)
         return {"status": "success", "result": result["output"]}
     except Exception as err:
         raise HTTPException(
@@ -41,10 +42,11 @@ async def stream_chat(request: ChatQuery) -> StreamingResponse:
     """채팅 응답을 스트리밍으로 반환하는 핸들러"""
     try:
         chain = ChatChain.get_instance(request.session_id)
+        query = request.query or ""  # None일 경우 빈 문자열 사용
 
         async def generate() -> AsyncGenerator[str, None]:
             async for chunk in chain.astream(
-                settings_to_xml(request.user_setting), request.query, request.user_input
+                settings_to_xml(request.user_setting), query, request.user_input
             ):
                 if chunk:
                     yield f"data: {chunk.content}\n\n"
