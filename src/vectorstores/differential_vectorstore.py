@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 from src.vectorstores.chunk_manager import chunk_manager
+from src.vectorstores.vectorstore_manager import vectorstore_manager
 
 load_dotenv()
 
@@ -41,7 +42,8 @@ class DifferentialVectorStore:
     def _ensure_schema(self, tenant_id: str) -> None:
         """테넌트의 스키마가 존재하는지 확인하고 없으면 생성"""
         client = self.get_client(tenant_id)
-        index_name = f"Tenant_{tenant_id}"
+        safe_tenant_id = vectorstore_manager._get_safe_index_name(tenant_id)
+        index_name = f"Tenant_{safe_tenant_id}"
 
         if not client.schema.exists(index_name):
             class_obj = {
@@ -79,7 +81,8 @@ class DifferentialVectorStore:
         )
 
         client = self.get_client(tenant_id)
-        index_name = f"Tenant_{tenant_id}"
+        safe_tenant_id = vectorstore_manager._get_safe_index_name(tenant_id)
+        index_name = f"Tenant_{safe_tenant_id}"
         batch = client.batch.configure(batch_size=50)
 
         for chunk_id in deleted_chunk_ids:

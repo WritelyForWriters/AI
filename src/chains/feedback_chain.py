@@ -6,6 +6,7 @@ from langchain_core.messages import BaseMessage
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 
 from src.prompts.feedback_prompts import FEEDBACK_PROMPT
+from src.vectorstores.vectorstore_manager import vectorstore_manager
 
 
 class FeedbackChain:
@@ -37,9 +38,12 @@ class FeedbackChain:
             max_retries=2,
         )
 
+        safe_tenant_id = vectorstore_manager._get_safe_index_name(
+            index_name.split("_")[1]
+        )
         self.vectorstore = Weaviate(
             client=client,
-            index_name="Tenant_" + index_name.split("_")[1],
+            index_name=f"Tenant_{safe_tenant_id}",
             text_key="text",
             embedding=embeddings,
             attributes=["tenant_id"],
