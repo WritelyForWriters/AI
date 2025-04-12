@@ -30,7 +30,8 @@ async def query_user_modify(request: UserModifyQuery) -> Dict[str, str]:
     try:
         settings_xml = settings_to_xml(request.user_setting)
         client = vectorstore_manager.get_client(request.tenant_id)
-        index_name = f"Tenant_{request.tenant_id}"
+        safe_tenant_id = vectorstore_manager._get_safe_index_name(request.tenant_id)
+        index_name = f"Tenant_{safe_tenant_id}"
         chain = UserModifyChain(
             client=client,
             index_name=index_name,
@@ -50,7 +51,8 @@ async def stream_user_modify(request: UserModifyQuery) -> StreamingResponse:
     """사용자 수정 결과를 스트리밍으로 반환하는 핸들러"""
     try:
         client = vectorstore_manager.get_client(request.tenant_id)
-        index_name = f"Tenant_{request.tenant_id}"
+        safe_tenant_id = vectorstore_manager._get_safe_index_name(request.tenant_id)
+        index_name = f"Tenant_{safe_tenant_id}"
         chain = UserModifyChain(
             client=client,
             index_name=index_name,
