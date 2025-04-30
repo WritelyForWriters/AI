@@ -346,7 +346,7 @@ def synthesize_all_steps(state: ResearchState) -> ResearchState:
         return {
             **state,
             "messages": state["messages"] + [final_message],
-            "final_answer": final_message.content,
+            "final_answer": final_message.content,  # 이미 str 타입임
         }
 
     _, _, synthesis_llm = get_models()
@@ -394,21 +394,26 @@ def synthesize_all_steps(state: ResearchState) -> ResearchState:
         final_result = synthesis_llm.invoke(synthesis_prompt)
         final_result_content = final_result.content
 
-        # 문자열 타입 확인 및 변환
-        if not isinstance(final_result_content, str):
-            final_result_content = str(final_result_content)
+        # 문자열 타입 확인 및 변환 - 더 명확한 타입 처리
+        final_result_str = ""
+        if isinstance(final_result_content, str):
+            final_result_str = final_result_content
+        else:
+            final_result_str = str(final_result_content)
 
         # XML 태그 등 정리
-        final_result_content = re.sub(r"<\?xml.*?\?>", "", final_result_content)
-        final_result_content = re.sub(r"<[^>]*>", "", final_result_content).strip()
+        final_result_str = re.sub(r"<\?xml.*?\?>", "", final_result_str)
+        final_result_str = re.sub(r"<[^>]*>", "", final_result_str).strip()
 
-        final_message = AIMessage(content=final_result_content)
+        final_message = AIMessage(content=final_result_str)
 
-        # 문자열로 명시적 형변환하여 final_answer에 할당
+        # final_answer는 문자열 타입으로 확실히 할당
+        final_answer_str: Optional[str] = final_result_str
+
         return {
             **state,
             "messages": state["messages"] + [final_message],
-            "final_answer": str(final_result_content),  # 명시적으로 str 형변환
+            "final_answer": final_answer_str,
         }
     except Exception as e:
         error_msg = f"최종 결과 생성 오류: {str(e)}"
@@ -421,7 +426,7 @@ def synthesize_all_steps(state: ResearchState) -> ResearchState:
         return {
             **state,
             "messages": state["messages"] + [final_message],
-            "final_answer": fallback_content,
+            "final_answer": fallback_content,  # 이미 str 타입임
             "error": error_msg,  # 최종 단계 에러도 기록
         }
 
