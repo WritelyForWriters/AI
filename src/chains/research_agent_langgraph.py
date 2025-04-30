@@ -15,7 +15,7 @@ from langchain_community.chat_models import ChatPerplexity
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langgraph.graph import END, START, StateGraph
+from langgraph.graph import END, START, CompiledStateGraph, StateGraph
 from langgraph.graph.message import add_messages
 
 from src.memory.redis_memory import RedisConversationMemory
@@ -171,7 +171,11 @@ def decompose_request(state: ResearchState) -> ResearchState:
 
     try:
         result = planning_llm.invoke(prompt)
-        steps = parser.parse(result.content)  # JSON 파싱
+        # content가 문자열인지 확인하고 처리
+        result_content = result.content
+        if not isinstance(result_content, str):
+            result_content = str(result_content)
+        steps = parser.parse(result_content)  # JSON 파싱
 
         if not isinstance(steps, list) or not all(isinstance(s, str) for s in steps):
             raise ValueError(
@@ -249,7 +253,11 @@ def execute_step(state: ResearchState) -> ResearchState:
 
     try:
         query_result = planning_llm.invoke(query_prompt)
-        query = query_result.content.strip()
+        query_content = query_result.content
+        # 문자열 타입 확인 및 변환
+        if not isinstance(query_content, str):
+            query_content = str(query_content)
+        query = query_content.strip()
         query_message = SystemMessage(
             content=f"단계 {current_index + 1} 검색 쿼리: {query}"
         )
@@ -260,6 +268,10 @@ def execute_step(state: ResearchState) -> ResearchState:
         )  # SEARCH_PROMPT 형식에 맞게
         search_response = search_llm.invoke(search_prompt_formatted)
         search_result_content = search_response.content
+
+        # 문자열 타입 확인 및 변환
+        if not isinstance(search_result_content, str):
+            search_result_content = str(search_result_content)
 
         # XML 태그 등 불필요한 내용 제거 (필요시)
         search_result_content = re.sub(r"<[^>]*>", "", search_result_content).strip()
@@ -379,7 +391,12 @@ def synthesize_all_steps(state: ResearchState) -> ResearchState:
     )
 
     try:
-        final_result_content = synthesis_llm.invoke(synthesis_prompt).content
+        final_result = synthesis_llm.invoke(synthesis_prompt)
+        final_result_content = final_result.content
+
+        # 문자열 타입 확인 및 변환
+        if not isinstance(final_result_content, str):
+            final_result_content = str(final_result_content)
 
         # XML 태그 등 정리
         final_result_content = re.sub(r"<\?xml.*?\?>", "", final_result_content)
@@ -431,7 +448,7 @@ def should_continue(state: ResearchState) -> str:
 
 
 # --- LangGraph StateGraph 구성 업데이트 ---
-def build_research_graph() -> StateGraph:
+def build_research_graph() -> CompiledStateGraph:
     """단계적 사고를 적용한 연구 그래프 빌드"""
     graph = StateGraph(ResearchState)
 
