@@ -17,6 +17,8 @@ langchain-cli = "^0.0.35"
 redis = "^5.0.1"
 weaviate-client = "^3.26.2"
 langchain-google-genai = "^2.0.8"
+matplotlib = "^3.10.1"
+langgraph = "^0.3.34"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

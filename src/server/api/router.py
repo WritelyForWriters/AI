@@ -18,6 +18,7 @@ from src.server.docs.api_docs import (
     PLANNER_DOCS,
     PLANNER_STREAM_DOCS,
     RESEARCH_DOCS,
+    RESEARCH_STREAM_DOCS,
     USER_MODIFY_DOCS,
     USER_MODIFY_STREAM_DOCS,
 )
@@ -147,6 +148,18 @@ async def query_research_endpoint(
 
 
 @assistant_router.post(
+    "/research/stream",
+    summary=RESEARCH_STREAM_DOCS["summary"],
+    description=RESEARCH_STREAM_DOCS["description"],
+    responses=RESEARCH_STREAM_DOCS["responses"],
+)
+async def stream_research_endpoint(
+    request: research_endpoint.ResearchQuery,
+) -> StreamingResponse:
+    return await research_endpoint.stream_research(request)
+
+
+@assistant_router.post(
     "/chat",
     summary=CHAT_DOCS["summary"],
     description=CHAT_DOCS["description"],
@@ -168,19 +181,6 @@ async def stream_chat_endpoint(
     request: chat_endpoint.ChatQuery,
 ) -> StreamingResponse:
     return await chat_endpoint.stream_chat(request)
-
-
-# TODO: 스트리밍 기능 추가 후 활성화
-# @assistant_router.post(
-#     "/research/stream",
-#     summary=RESEARCH_STREAM_DOCS["summary"],
-#     description=RESEARCH_STREAM_DOCS["description"],
-#     responses=RESEARCH_STREAM_DOCS["responses"],
-# )
-# async def stream_research_endpoint(
-#     request: research_endpoint.ResearchQuery,
-# ) -> StreamingResponse:
-#     return await research_endpoint.stream_research(request)
 
 
 # 플래너 관련 라우터

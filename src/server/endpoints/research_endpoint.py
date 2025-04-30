@@ -28,29 +28,48 @@ async def query_research(request: ResearchQuery) -> Dict[str, str]:
     try:
         settings_xml = settings_to_xml(request.user_setting)
         chain = ResearchChain.get_instance(request.session_id)
-        result = chain(settings_xml, request.query, request.user_input)
+        result = chain(settings_xml, request.query or "", request.user_input)
         return {"status": "success", "result": result["output"]}
     except Exception as err:
+        # 에러 로깅
+        import traceback
+
+        error_details = f"Research query failed: {str(err)}\n{traceback.format_exc()}"
+        print(error_details)
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to process research query",
+            detail=f"Failed to process research query: {str(err)}",
         ) from err
 
 
 async def stream_research(request: ResearchQuery) -> StreamingResponse:
     """리서치 결과를 스트리밍으로 반환하는 핸들러"""
     try:
-        chain = ResearchChain.get_instance()
+        settings_xml = settings_to_xml(request.user_setting)
+        chain = ResearchChain.get_instance(request.session_id)
 
         async def generate() -> AsyncGenerator[str, None]:
-            async for chunk in chain.astream(
-                settings_to_xml(request.user_setting), request.query, request.user_input
-            ):
-                if chunk:
-                    yield f"data: {chunk.content}\n\n"
-            yield "data: [DONE]\n\n"
+            try:
+                async for chunk in chain.astream(
+                    settings_xml, request.query or "", request.user_input
+                ):
+                    if chunk and hasattr(chunk, "content"):
+                        yield f"data: {chunk.content}\n\n"
+                yield "data: [DONE]\n\n"
+            except Exception as e:
+                import traceback
+
+                error_details = f"Streaming error: {str(e)}\n{traceback.format_exc()}"
+                print(error_details)
+                yield f"data: 죄송합니다. 스트리밍 중 오류가 발생했습니다: {str(e)}\n\n"
+                yield "data: [DONE]\n\n"
 
         return StreamingResponse(generate(), media_type="text/event-stream")
 
     except Exception as e:
+        import traceback
+
+        error_details = f"Stream setup error: {str(e)}\n{traceback.format_exc()}"
+        print(error_details)
         raise HTTPException(status_code=500, detail=str(e)) from e

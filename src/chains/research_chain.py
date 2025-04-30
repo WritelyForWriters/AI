@@ -1,14 +1,9 @@
 from typing import Any, AsyncGenerator, Dict, Optional
 
 from langchain.schema import BaseMessage
-from langchain_community.chat_models import ChatPerplexity
-from langchain_google_genai import ChatGoogleGenerativeAI
 
-from src.memory.redis_memory import RedisConversationMemory
-from src.prompts.research_prompts import (
-    QUERY_GENERATION_PROMPT,
-    SEARCH_PROMPT,
-)
+# 기존 에이전트 대신 LangGraph 에이전트 사용
+from src.chains.research_agent_langgraph import LangGraphResearchAgent
 
 
 class ResearchChain:
@@ -27,71 +22,18 @@ class ResearchChain:
         return cls._instances["default"]
 
     def __init__(self, session_id: Optional[str] = None) -> None:
-        # 쿼리 생성용 Gemini
-        self.query_llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
-            temperature=0.3,
-            convert_system_message_to_human=True,
-        )
-
-        # 검색용 Perplexity
-        self.search_llm = ChatPerplexity(
-            temperature=0,
-            model="llama-3.1-sonar-small-128k-online",
-            timeout=10,
-        )
-
-        self.memory = RedisConversationMemory(session_id) if session_id else None
-
-        # 1. 검색 쿼리 생성 체인
-        self.query_chain: Any = (
-            {
-                "chat_history": lambda x: self.memory.load_memory_variables({})[
-                    "chat_history"
-                ]
-                if self.memory
-                else [],
-                "user_setting": lambda x: x["user_setting"],
-                "query": lambda x: x["query"],
-                "user_input": lambda x: x["user_input"],
-            }
-            | QUERY_GENERATION_PROMPT
-            | self.query_llm
-        )
-
-        # 2. 검색 체인 (최종 응답)
-        self.chain: Any = (
-            {
-                "query": lambda x: self.query_chain.invoke(x).content,
-                "user_input": lambda x: x["user_input"],
-            }
-            | SEARCH_PROMPT
-            | self.search_llm
-        )
+        # LangGraphResearchAgent 인스턴스 생성
+        self.agent = LangGraphResearchAgent.get_instance(session_id)
 
     def __call__(
         self, user_setting: str, query: str, user_input: str
     ) -> Dict[str, Any]:
-        """동기식 호출"""
-        result = self.chain.invoke(
-            {"user_setting": user_setting, "query": query, "user_input": user_input}
-        )
-        if self.memory:
-            self.memory.save_context({"input": user_input}, {"output": result})
-        return {"output": result}
+        """동기식 호출 - LangGraphResearchAgent로 위임"""
+        return self.agent(user_setting, query, user_input)
 
     async def astream(
         self, user_setting: str, query: str, user_input: str
     ) -> AsyncGenerator[BaseMessage, None]:
-        """비동기 스트리밍"""
-        async for chunk in self.chain.astream(
-            {
-                "user_setting": user_setting,
-                "query": query,
-                "user_input": user_input,
-            }
-        ):
+        """비동기 스트리밍 - LangGraphResearchAgent로 위임"""
+        async for chunk in self.agent.astream(user_setting, query, user_input):
             yield chunk
-
-        if self.memory:
-            self.memory.save_context({"input": user_input}, {"output": chunk.content})
