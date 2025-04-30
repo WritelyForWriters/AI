@@ -15,7 +15,7 @@ from langchain_community.chat_models import ChatPerplexity
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langgraph.graph import END, START, CompiledStateGraph, StateGraph
+from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 
 from src.memory.redis_memory import RedisConversationMemory
@@ -404,10 +404,11 @@ def synthesize_all_steps(state: ResearchState) -> ResearchState:
 
         final_message = AIMessage(content=final_result_content)
 
+        # 문자열로 명시적 형변환하여 final_answer에 할당
         return {
             **state,
             "messages": state["messages"] + [final_message],
-            "final_answer": final_result_content,
+            "final_answer": str(final_result_content),  # 명시적으로 str 형변환
         }
     except Exception as e:
         error_msg = f"최종 결과 생성 오류: {str(e)}"
@@ -448,7 +449,7 @@ def should_continue(state: ResearchState) -> str:
 
 
 # --- LangGraph StateGraph 구성 업데이트 ---
-def build_research_graph() -> CompiledStateGraph:
+def build_research_graph() -> Any:
     """단계적 사고를 적용한 연구 그래프 빌드"""
     graph = StateGraph(ResearchState)
 
