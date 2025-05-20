@@ -22,6 +22,8 @@ from src.memory.redis_memory import RedisConversationMemory
 from src.prompts.research_prompts import (
     DECOMPOSE_REQUEST_PROMPT,
     FINAL_SYNTHESIS_PROMPT,
+    MODE_DETECTION_PROMPT,
+    NORMAL_RESPONSE_PROMPT,
     SEARCH_PROMPT,
     STEP_QUERY_GENERATION_PROMPT,
 )
@@ -52,6 +54,7 @@ class ResearchMode(str, Enum):
 
     VERIFICATION = "verification"
     RESEARCH = "research"
+    NORMAL = "normal"  # 일반 모드 추가 - 리서치 없이 바로 응답
 
 
 # 언어 모델 준비
@@ -79,9 +82,12 @@ def get_models() -> (
     return planning_llm, search_llm, synthesis_llm
 
 
-# --- 노드 1: 모드 감지 (기존과 동일)
+# --- 노드 1: 모드 감지 (LLM 활용)
 def detect_mode(state: ResearchState) -> ResearchState:
-    """사용자 입력과 원본 컨텐츠를 분석하여 검증 또는 연구 모드 결정"""
+    """LLM을 사용하여 사용자 입력과 원본 컨텐츠를 분석하고 적절한 모드 결정"""
+    planning_llm, _, _ = get_models()
+    parser = JsonOutputParser()
+
     messages = state["messages"]
     last_user_message = next(
         (m for m in reversed(messages) if isinstance(m, HumanMessage)), None
@@ -96,35 +102,47 @@ def detect_mode(state: ResearchState) -> ResearchState:
 
     user_input = last_user_message.content
     original_content = state.get("original_content", "")
+    user_setting = state.get("user_setting", "")
 
-    verification_keywords = [
-        "고증",
-        "정확",
-        "확인",
-        "맞",
-        "틀",
-        "역사적",
-        "시대적",
-        "사실",
-        "검증",
-        "평가",
-        "확인",
-        "오류",
-        "맞는지",
-        "올바른지",
-    ]
-
-    has_verification_keyword = any(
-        keyword in user_input for keyword in verification_keywords
+    # LLM을 사용하여 모드 판단
+    prompt = MODE_DETECTION_PROMPT.format(
+        user_input=user_input,
+        original_content=original_content[:1000]
+        if original_content
+        else "(작품 내용 없음)",
+        user_setting=user_setting,
     )
-    has_content_to_verify = original_content and len(original_content.strip()) > 0
 
-    mode = (
-        ResearchMode.VERIFICATION
-        if (has_verification_keyword and has_content_to_verify)
-        else ResearchMode.RESEARCH
-    )
-    mode_message = SystemMessage(content=f"현재 모드: {mode}")
+    try:
+        result = planning_llm.invoke(prompt)
+        result_content = result.content
+
+        if not isinstance(result_content, str):
+            result_content = str(result_content)
+
+        # JSON 파싱하여 모드 추출
+        parsed_result = parser.parse(result_content)
+        detected_mode = parsed_result.get("mode", "normal").lower()
+        reason = parsed_result.get("reason", "모드 판단 이유가 제공되지 않았습니다.")
+
+        # 유효한 모드인지 확인하고 적용
+        if detected_mode in [mode.value for mode in ResearchMode]:
+            mode = detected_mode
+        else:
+            # 유효하지 않은 모드일 경우 기본값으로 normal 설정
+            print(f"유효하지 않은 모드({detected_mode}) 감지, 기본값(normal)으로 설정")
+            mode = ResearchMode.NORMAL.value
+
+        # 감지된 모드 안내 메시지
+        mode_message = SystemMessage(content=f"현재 모드: {mode} (이유: {reason})")
+
+    except Exception as e:
+        # 오류 발생 시 기본값(NORMAL)으로 설정
+        print(f"모드 감지 중 오류 발생: {str(e)}, 기본값(normal)으로 설정")
+        mode = ResearchMode.NORMAL.value
+        mode_message = SystemMessage(
+            content=f"현재 모드: {mode} (자동 설정: 모드 감지 중 오류 발생)"
+        )
 
     # 상태 초기화 시 step_results가 None일 수 있으므로 빈 리스트로 초기화
     return {
@@ -135,6 +153,7 @@ def detect_mode(state: ResearchState) -> ResearchState:
         "step_results": [],  # 단계 결과 리스트 초기화
         "research_steps": None,  # 연구 단계 초기화
         "final_answer": None,  # 최종 답변 초기화
+        "temp_step_result": None,  # 임시 단계 결과 초기화
         "error": None,  # 에러 초기화
     }
 
@@ -340,8 +359,12 @@ def synthesize_all_steps(state: ResearchState) -> ResearchState:
         "step_results"
     ):  # 에러가 있고 결과도 없으면 바로 종료
         error_msg = state.get("error", "알 수 없는 오류")
+        # 로그에는 실제 오류 기록
+        print(f"오류 발생: {error_msg}")
+
+        # 사용자에게는 친화적인 메시지 제공
         final_message = AIMessage(
-            content=f"죄송합니다. 연구 중 오류가 발생하였습니다: {error_msg}"
+            content="죄송합니다. 문제가 발생했습니다. 질문을 다르게 표현해 보세요."
         )
         # 확실히 문자열임을 보장
         error_content: str = str(final_message.content)
@@ -368,31 +391,57 @@ def synthesize_all_steps(state: ResearchState) -> ResearchState:
     mode = state.get("mode", ResearchMode.RESEARCH)
     step_results = state.get("step_results", [])
 
-    step_results_summary = "\n\n".join(
-        [
-            f"**단계 {i+1}: {res['step']}**\n"
-            f"  - 검색 쿼리: {res['query']}\n"
-            f"  - 검색 결과 요약: {res['search_result'][:300]}..."
-            for i, res in enumerate(step_results)
-        ]
-    )
+    try:
+        # 일반 모드일 경우 바로 응답 생성
+        if mode == ResearchMode.NORMAL.value:
+            print("일반 모드로 직접 응답 생성 중...")
+            # 직접 질문에 답변하는 프롬프트 생성
+            normal_prompt = NORMAL_RESPONSE_PROMPT.format(
+                user_input=user_input,
+                original_content_summary=original_content_summary,
+                user_setting=user_setting,
+            )
+            response = synthesis_llm.invoke(normal_prompt)
+            normal_result_content = response.content
 
-    # 오류가 있었지만 일부 결과가 있는 경우, 해당 정보 포함
-    if state.get("error"):
-        step_results_summary += (
-            f"\n\n**참고:** 연구 중 오류가 발생했습니다 ({state['error']}). "
-            f"일부 결과가 누락되었을 수 있습니다."
+            # 문자열로 강제 변환
+            normal_result_str: str = ""
+            if normal_result_content is None:
+                normal_result_str = ""
+            elif isinstance(normal_result_content, str):
+                normal_result_str = normal_result_content
+            else:
+                normal_result_str = str(normal_result_content)
+
+            # 불필요한 태그 제거
+            normal_result_str = re.sub(r"<[^>]*>", "", normal_result_str).strip()
+            normal_message = AIMessage(content=normal_result_str)
+
+            return {
+                **state,
+                "messages": state["messages"] + [normal_message],
+                "final_answer": normal_result_str,
+            }
+
+        # 연구/검증 모드 - 기존 로직 유지
+        step_results_summary = "\n\n".join(
+            [
+                f"**정보 {i+1}**\n{res['search_result']}"
+                for i, res in enumerate(step_results)
+            ]
         )
 
-    synthesis_prompt = FINAL_SYNTHESIS_PROMPT.format(
-        user_input=user_input,
-        original_content_summary=original_content_summary,
-        user_setting=user_setting,
-        mode=mode,
-        step_results_summary=step_results_summary,
-    )
+        # 오류가 있었지만 일부 결과가 있는 경우, 해당 정보는 포함하지 않음
+        # 사용자에게는 내부 오류 정보를 노출하지 않음
 
-    try:
+        synthesis_prompt = FINAL_SYNTHESIS_PROMPT.format(
+            user_input=user_input,
+            original_content_summary=original_content_summary,
+            user_setting=user_setting,
+            mode=mode,
+            step_results_summary=step_results_summary,
+        )
+
         final_result = synthesis_llm.invoke(synthesis_prompt)
         final_result_content = final_result.content
 
@@ -422,10 +471,13 @@ def synthesize_all_steps(state: ResearchState) -> ResearchState:
         }
     except Exception as e:
         error_msg = f"최종 결과 생성 오류: {str(e)}"
-        # 종합 실패 시, 단계별 결과라도 보여주는 것을 고려
+        # 로그에는 실제 오류 기록
+        print(error_msg)
+
+        # 사용자에게는 일반적인 메시지 제공
         fallback_content = (
-            f"죄송합니다. 최종 답변 생성 중 오류가 발생했습니다 ({error_msg}).\n\n"
-            f"지금까지의 연구 결과 요약:\n{step_results_summary}"
+            "죄송합니다. 질문에 대한 답변을 생성하는 중 문제가 발생했습니다. "
+            "다시 질문해주시거나 질문을 구체적으로 작성해 주시면 도움됩니다."
         )
         final_message = AIMessage(content=fallback_content)
         # 확실히 문자열임을 보장
@@ -434,16 +486,29 @@ def synthesize_all_steps(state: ResearchState) -> ResearchState:
             **state,
             "messages": state["messages"] + [final_message],
             "final_answer": fallback_str,
-            "error": error_msg,  # 최종 단계 에러도 기록
+            "error": error_msg,  # 내부적으로는 실제 오류 보존
         }
 
 
-# --- 라우팅 조건 수정 ---
+# --- 감지 모드에 따른 라우팅 ---
+def route_by_mode(state: ResearchState) -> str:
+    """감지된 모드에 따라 다음 단계를 결정"""
+    mode = state.get("mode", "")
+    if mode == ResearchMode.NORMAL:
+        # 일반 모드는 연구 단계 없이 바로 최종 종합으로
+        print("일반 모드, 바로 최종 응답 단계로 이동")
+        return "direct_answer"
+    else:
+        # 연구/검증 모드는 요청 분해 단계로
+        print(f"{mode} 모드, 요청 분해 단계로 이동")
+        return "decompose"
+
+
+# --- 다음 단계 결정 라우팅 ---
 def should_continue(state: ResearchState) -> str:
     """다음 단계를 계속 진행할지, 아니면 최종 종합으로 갈지 결정"""
     if state.get("error"):
         # 오류 발생 시, 종합 단계로 가서 현재까지 결과라도 보고하도록 함
-        # 또는 여기서 바로 END로 보낼 수도 있음 ('finish' 대신 'end_with_error' 등)
         print("오류 발생, 종합 단계로 이동")
         return "synthesize"
 
@@ -475,8 +540,17 @@ def build_research_graph() -> Any:
     # 시작 노드 설정
     graph.add_edge(START, "detect_mode")
 
-    # 엣지 추가
-    graph.add_edge("detect_mode", "decompose_request")
+    # 모드에 따른 라우팅
+    graph.add_conditional_edges(
+        "detect_mode",
+        route_by_mode,
+        {
+            "direct_answer": "synthesize_all_steps",  # 일반 모드는 바로 최종 응답으로
+            "decompose": "decompose_request",  # 연구/검증 모드는 요청 분해로
+        },
+    )
+
+    # 기존 엣지
     graph.add_edge("decompose_request", "execute_step")  # 첫 단계 실행
     graph.add_edge("execute_step", "accumulate_result")
 

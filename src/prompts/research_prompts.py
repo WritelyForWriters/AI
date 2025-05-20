@@ -179,13 +179,26 @@ DECOMPOSE_REQUEST_PROMPT = PromptTemplate.from_template(
     """사용자의 요청과 주어진 문학 작품 정보를 바탕으로, 연구 또는 검증을 위한 단계별 계획을 JSON 형식의 리스트로 작성해주세요.
 
 사용자 요청: {user_input}
-작품 내용 (요약): {original_content_summary}
+작품 내용 (일부): {original_content_summary}
 사용자 설정 (시대/공간 등): {user_setting}
 
 각 단계는 구체적인 질문이나 조사 항목이어야 합니다.
 
+다음 지침을 엄격히 따라주세요:
+1. 단계는 최대 3개까지만 생성하며, 가능하면 더 적게 생성하세요.
+2. 각 단계는 독립적이고 구체적인 질문이어야 합니다.
+3. 중복되거나 서로 포함되는 단계를 생성하지 마세요.
+4. 시간 순서대로 단계를 구성하지 말고, 정보의 중요도 순서로 구성하세요.
+5. 질문의 범위는 넓게 잡아서 단계 수를 최소화하세요.
+6. 사용자 질문에 직접적으로 관련된 핵심 정보만 조사하는 단계를 포함하세요.
+7. 부가적이거나 맥락적인 정보를 위한 단계는 꼭 필요한 경우에만 포함하세요.
+8. 정말 필요한 단계만 생성하세요. 단일 질문으로 해결 가능하다면 1개 단계만 생성하세요.
+
+단계 작성 시 질문은 명확하고 구체적으로, 검색 가능한 형태로 작성하세요.
+
 예시:
-["작품의 주요 배경이 되는 18세기 프랑스 파리의 사회적 분위기는 어떠했는가?", "주인공이 사용하는 특정 도구(예: 아편)가 당시 실제로 사용되었는가?", "묘사된 복식이 시대적 고증에 맞는가?"]
+["1960년대 미국 로스앤젤레스의 음악 문화와 유행했던 장르는?"]  # 단일 질문으로 충분한 경우
+["조선시대 중기 양반 남성의 일상복 구성은?", "조선시대 궁중 연회의 진행 방식과 음식 문화는?"]  # 두 가지 구체적인 주제를 조사하는 경우
 
 단계별 계획 (JSON 리스트):"""
 )
@@ -206,15 +219,123 @@ STEP_QUERY_GENERATION_PROMPT = PromptTemplate.from_template(
 
 # 최종 결과 종합 프롬프트
 FINAL_SYNTHESIS_PROMPT = PromptTemplate.from_template(
-    """모든 연구 단계의 결과를 종합하여 사용자의 초기 요청에 대한 최종 답변을 작성해주세요. 답변은 {mode} 모드에 맞춰 작성되어야 합니다.
+    """```xml
+<settings>
+    <language>Korean</language>
+    <role>창작 지원 에이전트</role>
+</settings>
 
-사용자 요청: {user_input}
-작품 내용 (요약): {original_content_summary}
-사용자 설정: {user_setting}
-연구/검증 모드: {mode}
+<context>
+    <user_question>{user_input}</user_question>
+    <content_summary>{original_content_summary}</content_summary>
+    <setting>{user_setting}</setting>
+    <research_data>
+        {step_results_summary}
+    </research_data>
+</context>
 
-단계별 연구 결과:
-{step_results_summary}
+<instructions>
+    <task>
+        <primary>사용자 질문에 대한 최종 답변 작성</primary>
+        <requirements>
+            <item>내부 작동 방식이나 모드에 대한 언급 없이 사용자 질문에 직접 답변</item>
+            <item>연구 과정이나 단계에 대한 설명 없이 바로 결과와 인사이트 제공</item>
+            <item>사용자 질문과 관련성이 높은 정보만 선별하여 포함</item>
+            <item>연관성이 낮은 검색 결과나 리서치 내용은 과감히 제외</item>
+            <item>정보를 논리적이고 가독성 높게 구조화</item>
+            <item>창작 활동에 즉시 활용 가능한 실용적인 정보 중심으로 답변</item>
+            <item>작품 설정과 맥락을 고려한 맞춤형 정보 제공</item>
+            <item>검색된 정보를 무비판적으로 나열하지 말고 정제하여 전달</item>
+        </requirements>
+        <format>
+            <structure>
+                <simple_answer>간결한 핵심 답변 (2-3문장)</simple_answer>
+                <details>관련 세부 정보 (필요시에만, 중요도 순으로)</details>
+                <creative_application>작품 창작에 적용할 수 있는 구체적 제안 (선택적)</creative_application>
+            </structure>
+        </format>
+    </task>
+</instructions>
+```
 
-최종 답변:"""
+{user_input}에 대한 답변:"""
+)
+
+# 모드 판단 프롬프트
+MODE_DETECTION_PROMPT = PromptTemplate.from_template(
+    """```xml
+<settings>
+    <language>Korean</language>
+    <role>Research Mode Analyzer</role>
+</settings>
+
+<context>
+    <user_question>{user_input}</user_question>
+    <original_content>{original_content}</original_content>
+    <user_setting>{user_setting}</user_setting>
+</context>
+
+<instructions>
+    <task>
+        <primary>사용자 요청을 분석하여 적절한 응답 모드 결정</primary>
+        <requirements>
+            <item>사용자 질문과 제공된 작품 내용을 분석하여 가장 적합한 모드 결정</item>
+            <item>모드는 "verification", "research", "normal" 중 하나여야 함</item>
+            <item>역사적/시대적 정확성 확인 질문은 "verification" 모드로 분류</item>
+            <item>깊은 조사가 필요한 질문은 "research" 모드로 분류</item>
+            <item>간단한 질문이나 조언 요청은 "normal" 모드로 분류</item>
+            <item>검증을 위해서는 작품 내용(original_content)이 반드시 필요함</item>
+        </requirements>
+    </task>
+</instructions>
+
+<output_format>
+{{
+  "mode": "verification" or "research" or "normal",
+  "reason": "간단한 선택 이유 설명"
+}}
+</output_format>
+```
+
+사용자 요청과 작품 내용을 분석하여 응답 모드를 결정해주세요:"""
+)
+
+# 일반 모드 응답 프롬프트
+NORMAL_RESPONSE_PROMPT = PromptTemplate.from_template(
+    """```xml
+<settings>
+    <language>Korean</language>
+    <role>창작 지원 에이전트</role>
+</settings>
+
+<context>
+    <user_question>{user_input}</user_question>
+    <setting>{user_setting}</setting>
+    <content>{original_content_summary}</content>
+</context>
+
+<instructions>
+    <task>
+        <primary>사용자 질문에 직접 답변 제공</primary>
+        <requirements>
+            <item>내부 처리 방식이나 모드에 대한 언급 없이 사용자 질문에 직접 답변</item>
+            <item>작품 설정과 맥락을 고려한 맞춤형 정보 제공</item>
+            <item>간결하고 명확한 언어로 답변하되 필요한 세부 정보는 포함</item>
+            <item>사용자가 작가임을 고려하여 창작에 도움이 되는 정보 제공</item>
+            <item>질문에 직접 관련된 내용만 답변에 포함</item>
+            <item>논리적이고 가독성 높은 구조로 정보 전달</item>
+            <item>확실하지 않은 정보는 솔직하게 불확실성 표현</item>
+        </requirements>
+        <format>
+            <structure>
+                <simple_answer>간결한 핵심 답변 (2-3문장)</simple_answer>
+                <details>관련 세부 정보 (필요시에만)</details>
+                <creative_application>창작에 적용할 수 있는 제안 (선택적)</creative_application>
+            </structure>
+        </format>
+    </task>
+</instructions>
+```
+
+{user_input}에 대한 답변:"""
 )
