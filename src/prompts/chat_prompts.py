@@ -28,6 +28,6 @@ CHAT_PROMPT = ChatPromptTemplate.from_messages(
     [
         ("system", SYSTEM_PROMPT),
         MessagesPlaceholder(variable_name="chat_history"),
-        ("human", "{user_input}"),
+        ("human", "<user_input>{user_input}</user_input>"),
     ]
 )
