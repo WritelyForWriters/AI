@@ -15,7 +15,7 @@ class ResearchQuery(BaseModel):
     session_id: Optional[str] = None
 
 
-async def query_research(request: ResearchQuery) -> Dict[str, str]:
+async def query_research(request: ResearchQuery) -> Dict[str, Any]:
     """
     리서치 체인을 사용하여 쿼리에 응답하는 엔드포인트 로직
 
@@ -23,13 +23,17 @@ async def query_research(request: ResearchQuery) -> Dict[str, str]:
         request: 사용자 설정과 쿼리를 포함한 요청
 
     Returns:
-        Dict: 리서치 체인의 응답
+        Dict: 리서치 체인의 응답 (result와 sources 포함)
     """
     try:
         settings_xml = settings_to_xml(request.user_setting)
         chain = ResearchChain.get_instance(request.session_id)
         result = chain(settings_xml, request.query or "", request.user_input)
-        return {"status": "success", "result": result["output"]}
+        return {
+            "status": "success",
+            "result": result["output"],
+            "sources": result.get("sources", []),  # 출처 정보 추가
+        }
     except Exception as err:
         # 에러 로깅
         import traceback

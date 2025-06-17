@@ -29,6 +29,38 @@ from src.prompts.research_prompts import (
 )
 
 
+def extract_sources_from_perplexity_response(search_response: Any) -> List[str]:
+    """Perplexity 응답에서 출처 정보를 추출"""
+    sources = []
+    try:
+        # Perplexity API의 additional_kwargs에서 citations 추출
+        if (
+            hasattr(search_response, "additional_kwargs")
+            and search_response.additional_kwargs
+        ):
+            citations = search_response.additional_kwargs.get("citations", [])
+            if citations and isinstance(citations, list):
+                sources.extend(citations)
+
+        # 만약 citations가 없거나 비어있다면, content에서 URL 추출을 fallback으로 사용
+        if not sources and hasattr(search_response, "content"):
+            content = search_response.content
+            if isinstance(content, str):
+                import re
+
+                url_pattern = r"https?://[^\s\]\)]+"
+                urls = re.findall(url_pattern, content)
+                sources.extend(urls)
+
+        # 중복 제거 및 정리
+        sources = list({s.strip() for s in sources if s.strip()})
+
+    except Exception as e:
+        print(f"출처 추출 중 오류: {e}")
+
+    return sources
+
+
 # 상태 정의 업데이트
 class ResearchState(TypedDict):
     """연구 에이전트의 상태를 추적하는 타입"""
@@ -42,10 +74,10 @@ class ResearchState(TypedDict):
     # 단계적 연구를 위한 상태
     research_steps: Optional[List[str]]  # 생성된 연구 단계 목록
     current_step_index: int  # 현재 처리 중인 단계 인덱스
-    step_results: List[
-        Dict[str, Any]
-    ]  # 각 단계별 결과 저장 [{step: str, query: str, search_result: str}]
+    step_results: List[Dict[str, Any]]  # 각 단계별 결과 저장
+    # [{step: str, query: str, search_result: str, sources: List[str]}]
     final_answer: Optional[str]  # 최종 생성된 답변
+    final_sources: List[str]  # 최종 검색 출처 목록
     temp_step_result: Optional[Dict[str, Any]]  # 임시 단계 결과 저장
 
 
@@ -153,6 +185,7 @@ def detect_mode(state: ResearchState) -> ResearchState:
         "step_results": [],  # 단계 결과 리스트 초기화
         "research_steps": None,  # 연구 단계 초기화
         "final_answer": None,  # 최종 답변 초기화
+        "final_sources": [],  # 최종 출처 목록 초기화
         "temp_step_result": None,  # 임시 단계 결과 초기화
         "error": None,  # 에러 초기화
     }
@@ -287,10 +320,12 @@ def execute_step(state: ResearchState) -> ResearchState:
         )  # SEARCH_PROMPT 형식에 맞게
         search_response = search_llm.invoke(search_prompt_formatted)
         search_result_content = search_response.content
-
         # 문자열 타입 확인 및 변환
         if not isinstance(search_result_content, str):
             search_result_content = str(search_result_content)
+
+        # 출처 정보 추출 (search_response 객체 전체를 전달)
+        sources = extract_sources_from_perplexity_response(search_response)
 
         # XML 태그 등 불필요한 내용 제거 (필요시)
         search_result_content = re.sub(r"<[^>]*>", "", search_result_content).strip()
@@ -303,6 +338,7 @@ def execute_step(state: ResearchState) -> ResearchState:
             "step": current_step,
             "query": query,
             "search_result": search_result_content,
+            "sources": sources,  # 출처 정보 추가
         }
 
         return {
@@ -372,6 +408,7 @@ def synthesize_all_steps(state: ResearchState) -> ResearchState:
             **state,
             "messages": state["messages"] + [final_message],
             "final_answer": error_content,
+            "final_sources": [],  # 에러 시에도 빈 출처 목록 반환
         }
 
     _, _, synthesis_llm = get_models()
@@ -421,6 +458,7 @@ def synthesize_all_steps(state: ResearchState) -> ResearchState:
                 **state,
                 "messages": state["messages"] + [normal_message],
                 "final_answer": normal_result_str,
+                "final_sources": [],  # 일반 모드에서는 검색 없으므로 빈 출처 목록
             }
 
         # 연구/검증 모드 - 기존 로직 유지
@@ -430,6 +468,12 @@ def synthesize_all_steps(state: ResearchState) -> ResearchState:
                 for i, res in enumerate(step_results)
             ]
         )
+
+        # 모든 단계의 출처 정보 수집
+        all_sources = []
+        for result in step_results:
+            if "sources" in result and result["sources"]:
+                all_sources.extend(result["sources"])
 
         # 오류가 있었지만 일부 결과가 있는 경우, 해당 정보는 포함하지 않음
         # 사용자에게는 내부 오류 정보를 노출하지 않음
@@ -464,10 +508,14 @@ def synthesize_all_steps(state: ResearchState) -> ResearchState:
         # 완전히 새로운 변수에 타입을 명시적으로 지정
         clean_final_answer: str = final_result_str
 
+        # 중복 제거된 출처 목록
+        unique_sources = list(set(all_sources)) if all_sources else []
+
         return {
             **state,
             "messages": state["messages"] + [final_message],
             "final_answer": clean_final_answer,  # 확실한 str 타입
+            "final_sources": unique_sources,  # 출처 정보 저장
         }
     except Exception as e:
         error_msg = f"최종 결과 생성 오류: {str(e)}"
@@ -486,6 +534,7 @@ def synthesize_all_steps(state: ResearchState) -> ResearchState:
             **state,
             "messages": state["messages"] + [final_message],
             "final_answer": fallback_str,
+            "final_sources": [],  # 에러 시에도 빈 출처 목록 반환
             "error": error_msg,  # 내부적으로는 실제 오류 보존
         }
 
@@ -646,6 +695,7 @@ class LangGraphResearchAgent:
             "current_step_index": 0,
             "step_results": [],
             "final_answer": None,
+            "final_sources": [],  # 최종 출처 목록 초기화
             "temp_step_result": None,
             # 'search_results', 'verification_results', 'needs_more_research'는 제거됨
         }
@@ -663,6 +713,9 @@ class LangGraphResearchAgent:
             if final_state.get("error") and not output.startswith("죄송합니다"):
                 output += f"\n(참고: 작업 중 오류 발생: {final_state['error']})"
 
+            # 출처 정보 가져오기
+            sources = final_state.get("final_sources", [])
+
             # 메모리에 저장 (선택적)
             if self.memory:
                 try:
@@ -671,7 +724,7 @@ class LangGraphResearchAgent:
                 except Exception as mem_e:
                     print(f"[{self.session_id or 'default'}] 메모리 저장 실패: {mem_e}")
 
-            return {"output": output}
+            return {"output": output, "sources": sources}
 
         except Exception as e:
             import traceback
@@ -687,7 +740,7 @@ class LangGraphResearchAgent:
                 initial_state["error"] = str(e)  # 또는 더 상세한 정보
             except Exception:
                 pass  # 상태 업데이트 실패 무시
-            return {"output": error_output}
+            return {"output": error_output, "sources": []}
 
     async def astream(
         self, user_setting: str, original_content: str, user_input: str
@@ -706,6 +759,7 @@ class LangGraphResearchAgent:
             "current_step_index": 0,
             "step_results": [],
             "final_answer": None,
+            "final_sources": [],  # 최종 출처 목록 초기화
             "temp_step_result": None,
         }
 

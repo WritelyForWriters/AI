@@ -28,8 +28,10 @@ class ResearchChain:
     def __call__(
         self, user_setting: str, query: str, user_input: str
     ) -> Dict[str, Any]:
-        """동기식 호출 - LangGraphResearchAgent로 위임"""
-        return self.agent(user_setting, query, user_input)
+        """동기식 호출 - LangGraphResearchAgent로 위임하여 출처 정보도 포함하여 반환"""
+        result = self.agent(user_setting, query, user_input)
+        # result는 이제 {"output": str, "sources": List[str]} 형태
+        return result
 
     async def astream(
         self, user_setting: str, query: str, user_input: str

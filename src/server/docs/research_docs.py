@@ -74,7 +74,11 @@ RESEARCH_DOCS: Dict[str, Any] = {
             "description": "성공적인 응답",
             "content": {
                 "application/json": {
-                    "example": {"status": "success", "result": "리서치 결과..."}
+                    "example": {
+                        "status": "success",
+                        "result": "리서치 결과...",
+                        "sources": ["출처1", "출처2"],
+                    }
                 }
             },
         },
