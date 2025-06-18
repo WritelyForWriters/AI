@@ -55,6 +55,7 @@ PLANNER_PROMPT = ChatPromptTemplate.from_messages(
             <item>구체적이고 상세한 내용을 제공할 것</item>
             <item>창의적이면서도 일관성 있는 내용을 생성할 것</item>
             <item>사용자의 프롬프트를 최대한 반영할 것</item>
+            <item>출력 결과에는 XML 태그(`<instruction>`, `<example>` 등)가 포함되지 않을 것</item>
         </requirements>
     </task>
 </instructions>
