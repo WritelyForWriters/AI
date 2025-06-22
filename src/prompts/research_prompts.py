@@ -246,6 +246,7 @@ FINAL_SYNTHESIS_PROMPT = PromptTemplate.from_template(
             <item>창작 활동에 즉시 활용 가능한 실용적인 정보 중심으로 답변</item>
             <item>작품 설정과 맥락을 고려한 맞춤형 정보 제공</item>
             <item>검색된 정보를 무비판적으로 나열하지 말고 정제하여 전달</item>
+            <item>절대로 XML 형식으로 응답하지 말고, 항상 일반 텍스트나 마크다운 형식으로 응답</item>
         </requirements>
         <format>
             <structure>
